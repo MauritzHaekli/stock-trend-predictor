@@ -1,33 +1,29 @@
 import requests
 import json
+import yaml
 import pandas as pd
 
 
 def generate_time_series_csv():
 
-    def get_api_key() -> str:
-        json_file_path: str = './key.json'
+    with open('config.yaml', 'r') as config_file:
+        config = yaml.safe_load(config_file)
 
-        with open(json_file_path, 'r') as json_file:
-            json_data: json = json.load(json_file)
-            api_key_property: str = "api_key"
-            json_api_key: str = json_data.get(api_key_property)
-        return json_api_key
+    api_key: str = config['data']['api_key']
+    interval: str = config['data']['interval']
+    order: str = config['data']['order']
+    symbol: str = config['data']['symbol']
+    output: float = config['data']['output']
+    decimal_places = config['data']['decimal_places']
 
-    api_key: str = get_api_key()
-    interval: str = "1min"
-    order: str = "ASC"
-    symbol: str = "TSLA"
-    output: float = 5000
-    decimal_places = 2
-
-    time_series_url: str = f"https://api.twelvedata.com/time_series?symbol={symbol}&interval={interval}&order={order}&dp={decimal_places}&outputsize={output}&apikey={api_key}"
     dataframe_key: str = "datetime"
     response_values: str = "values"
+    time_series_indicator: str = "time_series"
 
-    trend_length: int = 2
+    trend_length: int = config['data']['trend_length']
 
-    def get_response_values(url: str) -> pd.DataFrame:
+    def get_response_values(indicator: str, ) -> pd.DataFrame:
+        url: str = f"https://api.twelvedata.com/{indicator}?symbol={symbol}&interval={interval}&order={order}&dp={decimal_places}&outputsize={output}&apikey={api_key}"
         response = requests.get(url)
         values: json = response.json().get(response_values, [])
         dataframe: pd.DataFrame = pd.DataFrame(values)
@@ -38,7 +34,7 @@ def generate_time_series_csv():
         else:
             return dataframe
 
-    time_series: pd.DataFrame = get_response_values(time_series_url)
+    time_series: pd.DataFrame = get_response_values(time_series_indicator)
 
     def get_trend_dataframe(original_dataframe: pd.DataFrame, column_names: [str]) -> pd.DataFrame:
         applied_trend_dataframe: pd.DataFrame = original_dataframe.copy()
@@ -68,53 +64,37 @@ def generate_time_series_csv():
             applied_trend_dataframe[applied_trend_column_name] = applied_trend_dataframe[applied_trend_column_name].astype(int)
         return applied_trend_dataframe
 
-    # applied_column_names = ["open", "high", "low", "close", "volume"]
-    applied_column_names: [str] = ["open"]
+    applied_column_names: [str] = config['data']['column_names']
 
     trend_dataframe: pd.DataFrame = get_trend_dataframe(time_series, applied_column_names)
-    target_column = trend_dataframe['open-trend']
 
-    trend_dataframe.index = pd.to_datetime(trend_dataframe['datetime'], format='%Y-%m-%d %H:%M:%S')
-    trend_dataframe.drop(["datetime"], axis=1, inplace=True)
-    trend_dataframe['day_of_week'] = trend_dataframe.index.day_of_week
-    trend_dataframe['hour'] = trend_dataframe.index.hour
-    trend_dataframe['target'] = target_column.shift(-trend_length)
-    trend_dataframe = trend_dataframe.iloc[trend_length:]
+    bollinger_indicator: str = "percent_b"
+    macd_indicator: str = "macd"
+    adx_indicator: str = "adx"
+    ema_indicator: str = "ema"
+    rsi_indicator: str = "rsi"
 
-    print(trend_dataframe)
+    bollinger_bands_data: pd.DataFrame = get_response_values(bollinger_indicator)
+    macd_data: pd.DataFrame = get_response_values(macd_indicator)
+    adx_data: pd.DataFrame = get_response_values(adx_indicator)
+    ema_data: pd.DataFrame = get_response_values(ema_indicator)
+    rsi_data: pd.DataFrame = get_response_values(rsi_indicator)
 
-    def get_merged_dataframes(first_dataframe: pd.DataFrame, second_dataframe: pd.DataFrame, merge_key: str) -> pd.DataFrame:
-        last_datetime_first_dataframe = first_dataframe.at[0, dataframe_key]
-        last_datetime_second_dataframe = first_dataframe.at[0, dataframe_key]
-        merge_conflict_error_message: str = "datetime merging conflict"
-        if last_datetime_first_dataframe == last_datetime_second_dataframe:
-            return pd.merge(first_dataframe, second_dataframe, left_on=merge_key, right_on=merge_key)
-        else:
-            print(merge_conflict_error_message)
-    """
-    bollinger_bands_url: str = f"https://api.twelvedata.com/percent_b?symbol={symbol}&interval={interval}&outputsize={output}&order={order}&dp={decimal_places}&apikey={api_key}"
-    bollinger_bands: pd.DataFrame = get_response_values(bollinger_bands_url)
+    indicators: pd.DataFrame = pd.merge(trend_dataframe, bollinger_bands_data, on='datetime')
+    indicators: pd.DataFrame = pd.merge(indicators, macd_data, on='datetime')
+    indicators: pd.DataFrame = pd.merge(indicators, adx_data, on='datetime')
+    indicators: pd.DataFrame = pd.merge(indicators, ema_data, on='datetime')
+    indicators: pd.DataFrame = pd.merge(indicators, rsi_data, on='datetime')
 
-    macd_url: str = f"https://api.twelvedata.com/macd?symbol={symbol}&interval={interval}&outputsize={output}&order={order}&dp={decimal_places}&apikey={api_key}"
-    macd: pd.DataFrame = get_response_values(macd_url)
+    indicators.index = pd.to_datetime(indicators['datetime'], format='%Y-%m-%d %H:%M:%S')
+    indicators.drop(['datetime'], axis=1, inplace=True)
+    indicators['day_of_week'] = indicators.index.day_of_week
+    indicators['hour'] = indicators.index.hour
+    indicators['target'] = indicators['open-trend'].shift(-trend_length, fill_value=0).astype(int)
+    indicators = indicators.iloc[trend_length:]
 
-    adx_url: str = f"https://api.twelvedata.com/adx?symbol={symbol}&interval={interval}&outputsize={output}&order={order}&dp={decimal_places}&apikey={api_key}"
-    adx: pd.DataFrame = get_response_values(adx_url)
+    indicators.to_csv(f"data/{symbol}_time_series.csv", index=False)
 
-    ema_url: str = f"https://api.twelvedata.com/ema?symbol={symbol}&interval={interval}&outputsize={output}&order={order}&dp={decimal_places}&apikey={api_key}"
-    ema: pd.DataFrame = get_response_values(ema_url)
-
-    rsi_url: str = f"https://api.twelvedata.com/rsi?symbol={symbol}&interval={interval}&outputsize={output}&order={order}&dp={decimal_places}&apikey={api_key}"
-    rsi: pd.DataFrame = get_response_values(rsi_url)
-
-    indicators_bollinger: pd.DataFrame = get_merged_dataframes(trend_dataframe, bollinger_bands, dataframe_key)
-    indicators_macd: pd.DataFrame = get_merged_dataframes(indicators_bollinger, macd, dataframe_key)
-    indicators_adx: pd.DataFrame = get_merged_dataframes(indicators_macd, adx, dataframe_key)
-    indicators_ema: pd.DataFrame = get_merged_dataframes(indicators_adx, ema, dataframe_key)
-    indicators_rsi: pd.DataFrame = get_merged_dataframes(indicators_ema, rsi, dataframe_key)
-
-    indicators_rsi.to_csv(f"data/{symbol}_time_series.csv", index=False)
-    """
 
 if __name__ == "__main__":
     generate_time_series_csv()

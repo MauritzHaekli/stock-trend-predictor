@@ -5,4 +5,5 @@ data:
   symbol: "TSLA"
   output: 5000
   decimal_places: 2
-  trend_length: 2
+  trend_length: 10
+  column_names: ["open", "high", "low", "close", "volume"]

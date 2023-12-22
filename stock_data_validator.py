@@ -1,19 +1,27 @@
 import pandas as pd
+import yaml
 
 
 class StockDataValidator:
-    def __init__(self, file_path):
+
+    with open('config.yaml', 'r') as config_file:
+        config = yaml.safe_load(config_file)
+
+    def __init__(self, file_path, config_path='config.yaml'):
         self.df = pd.read_csv(file_path)
+        self.config = self.load_config(config_path)
+        self.trend_length = self.config['data']['trend-length']
 
-    def validate_open_change(self):
-        # Check if open change is calculated correctly
-        self.df['open-change'] = self.df['open'] - self.df['open'].shift(10)
-        print(self.df['open'], self.df['open'].shift(20))
-        assert all(self.df['open-change'].notnull()), "Open change contains NaN values."
+    @staticmethod
+    def load_config(config_path):
+        with open(config_path, 'r') as yaml_file:
+            config_data = yaml.safe_load(yaml_file)
+        return config_data
 
-    def validate_open_trend(self):
-        # Check if open trend is calculated correctly
-        self.df['open-trend'] = self.df['open-change'].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
-        assert all(self.df['open-trend'].notnull()), "Open trend contains NaN values."
+    def calculate_previous_open():
+        df['previous'] = df['open'].shift(2)
+        return df
+
+
 
 
