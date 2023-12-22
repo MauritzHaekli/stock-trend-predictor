@@ -3,17 +3,16 @@ import json
 import pandas as pd
 
 
-def get_api_key() -> str:
-    json_file_path: str = './key.json'
-
-    with open(json_file_path, 'r') as json_file:
-        json_data: json = json.load(json_file)
-        api_key_property: str = "api_key"
-        json_api_key: str = json_data.get(api_key_property)
-    return json_api_key
-
-
 def generate_time_series_csv():
+
+    def get_api_key() -> str:
+        json_file_path: str = './key.json'
+
+        with open(json_file_path, 'r') as json_file:
+            json_data: json = json.load(json_file)
+            api_key_property: str = "api_key"
+            json_api_key: str = json_data.get(api_key_property)
+        return json_api_key
 
     api_key: str = get_api_key()
     interval: str = "1min"
@@ -70,8 +69,19 @@ def generate_time_series_csv():
         return applied_trend_dataframe
 
     # applied_column_names = ["open", "high", "low", "close", "volume"]
-    applied_column_names = ["open"]
-    trend_dataframe = get_trend_dataframe(time_series, applied_column_names)
+    applied_column_names: [str] = ["open"]
+
+    trend_dataframe: pd.DataFrame = get_trend_dataframe(time_series, applied_column_names)
+    target_column = trend_dataframe['open-trend']
+
+    trend_dataframe.index = pd.to_datetime(trend_dataframe['datetime'], format='%Y-%m-%d %H:%M:%S')
+    trend_dataframe.drop(["datetime"], axis=1, inplace=True)
+    trend_dataframe['day_of_week'] = trend_dataframe.index.day_of_week
+    trend_dataframe['hour'] = trend_dataframe.index.hour
+    trend_dataframe['target'] = target_column.shift(-trend_length)
+    trend_dataframe = trend_dataframe.iloc[trend_length:]
+
+    print(trend_dataframe)
 
     def get_merged_dataframes(first_dataframe: pd.DataFrame, second_dataframe: pd.DataFrame, merge_key: str) -> pd.DataFrame:
         last_datetime_first_dataframe = first_dataframe.at[0, dataframe_key]
@@ -81,7 +91,7 @@ def generate_time_series_csv():
             return pd.merge(first_dataframe, second_dataframe, left_on=merge_key, right_on=merge_key)
         else:
             print(merge_conflict_error_message)
-
+    """
     bollinger_bands_url: str = f"https://api.twelvedata.com/percent_b?symbol={symbol}&interval={interval}&outputsize={output}&order={order}&dp={decimal_places}&apikey={api_key}"
     bollinger_bands: pd.DataFrame = get_response_values(bollinger_bands_url)
 
@@ -103,8 +113,8 @@ def generate_time_series_csv():
     indicators_ema: pd.DataFrame = get_merged_dataframes(indicators_adx, ema, dataframe_key)
     indicators_rsi: pd.DataFrame = get_merged_dataframes(indicators_ema, rsi, dataframe_key)
 
-    indicators_rsi.to_csv(f"time_series_data/{symbol}_time_series.csv", index=False)
-
+    indicators_rsi.to_csv(f"data/{symbol}_time_series.csv", index=False)
+    """
 
 if __name__ == "__main__":
     generate_time_series_csv()
