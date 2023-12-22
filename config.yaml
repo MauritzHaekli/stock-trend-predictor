@@ -1,0 +1,8 @@
+data:
+  api_key: "82535d7d9eb84b5d905463e011aaaee8"
+  interval: "1min"
+  order: "ASC"
+  symbol: "TSLA"
+  output: 5000
+  decimal_places: 2
+  trend_length: 2
