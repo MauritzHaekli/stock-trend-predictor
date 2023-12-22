@@ -26,7 +26,7 @@ def generate_time_series_csv():
     dataframe_key: str = "datetime"
     response_values: str = "values"
 
-    trend_length: int = 10
+    trend_length: int = 2
 
     def get_response_values(url: str) -> pd.DataFrame:
         response = requests.get(url)
@@ -47,12 +47,20 @@ def generate_time_series_csv():
         trend_decreased: int = 0
 
         for column_name in column_names:
+            applied_comparison_column_name: str = f"previous {column_name}"
+            applied_change_column_name: str = f"{column_name}-change"
             applied_trend_column_name: str = f"{column_name}-trend"
             for entry in range(0, len(original_dataframe)):
                 if entry < trend_length:
+                    applied_trend_dataframe.loc[entry, applied_comparison_column_name] = 0
+                    applied_trend_dataframe.loc[entry, applied_change_column_name] = 0
                     applied_trend_dataframe.loc[entry, applied_trend_column_name] = trend_increased
                 elif entry >= trend_length:
-                    column_difference: float = round(float(applied_trend_dataframe.loc[entry, f"{column_name}"]) - float(applied_trend_dataframe.loc[entry - trend_length, f"{column_name}"]), decimal_places)
+                    column_previous: float = round(float(applied_trend_dataframe.loc[entry - trend_length, f"{column_name}"]), decimal_places)
+                    column_current: float = round(float(applied_trend_dataframe.loc[entry, f"{column_name}"]), decimal_places)
+                    column_difference: float = round(column_current - column_previous, decimal_places)
+
+                    applied_trend_dataframe.loc[entry, f"previous {column_name}"] = column_previous
                     applied_trend_dataframe.loc[entry, f"{column_name}-change"] = column_difference
                     if applied_trend_dataframe.loc[entry, f"{column_name}"] <= applied_trend_dataframe.loc[entry - trend_length, f"{column_name}"]:
                         applied_trend_dataframe.loc[entry, applied_trend_column_name] = trend_decreased
@@ -61,7 +69,8 @@ def generate_time_series_csv():
             applied_trend_dataframe[applied_trend_column_name] = applied_trend_dataframe[applied_trend_column_name].astype(int)
         return applied_trend_dataframe
 
-    applied_column_names = ["open", "high", "low", "close", "volume"]
+    # applied_column_names = ["open", "high", "low", "close", "volume"]
+    applied_column_names = ["open"]
     trend_dataframe = get_trend_dataframe(time_series, applied_column_names)
 
     def get_merged_dataframes(first_dataframe: pd.DataFrame, second_dataframe: pd.DataFrame, merge_key: str) -> pd.DataFrame:
