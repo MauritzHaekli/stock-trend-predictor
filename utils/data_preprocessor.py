@@ -14,8 +14,9 @@ class DataPreprocessor:
         data: raw stock data from a csv file
         target column: name of the column for which we want to make a prediction
         validation_size: A number between 0 and 1 to split data into testing and validation sets
+        trend_length: The length that we we try to predict. Trend_length of 10 means we want to predict, what happens in 10 iterations
         scaler: An sklearn function to preprocess data. Choose for desired purpose
-        target_data: Stock data set by set_target_data(). Datetimes have been dropped, ["target] has been added and shifted according to the trend length, aka the time we want to look into the future.
+        target_data: Stock data set by set_target_data(). Datetimes have been dropped, ["target] has been added and shifted according to the trend length.
         X_batched: contains (len(data) - lookback_period) entries. The first entry is a list of the first lookback_period rows of data. X_batched[index][-1] gives you the (index + lookback_period)-th row of data
         y_batched: contains (len(df) - seq_length) entries. The first entry is the "target" column of the seq_length row. X[index][-1][-1] and y[index] are the same "target" value.
         If df has 5000 entries, X.shape y.shape will give you: ((4980, 10, 25), (4980,))
@@ -30,12 +31,13 @@ class DataPreprocessor:
         X_train_scaled: Scaled training set derived from X_batched. Since we want to test the NN on unseen data, no split has been performed prior
 
     """
-    def __init__(self, data: pd.DataFrame, lookback_period: int, target_column: str, validation_size: float):
+    def __init__(self, data: pd.DataFrame, lookback_period: int, target_column: str, validation_size: float, trend_length: int):
 
         self.data = data
         self.lookback_period = lookback_period
         self.target_column = target_column
         self.validation_size = validation_size
+        self.trend_length = trend_length
         self.scaler = MinMaxScaler()
         self.target_data = None
         self.X_batched = None
@@ -57,10 +59,8 @@ class DataPreprocessor:
         self.set_scaled_testing_lookback_batch()
 
     def set_target_data(self):
-        with open('config.yaml', 'r') as config_file:
-            config = yaml.safe_load(config_file)
         raw_data = self.data
-        trend_length = config["data"]["trend_length"]
+        trend_length = self.trend_length
         raw_data.index = pd.to_datetime(raw_data['datetime'], format='%Y-%m-%d %H:%M:%S')
         raw_data.drop(['datetime'], axis=1, inplace=True)
         raw_data['day_of_week'] = raw_data.index.day_of_week

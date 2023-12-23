@@ -86,7 +86,7 @@ def generate_time_series_csv():
     indicators: pd.DataFrame = pd.merge(indicators, ema_data, on='datetime')
     indicators: pd.DataFrame = pd.merge(indicators, rsi_data, on='datetime')
 
-    indicators.to_csv(f"data/{symbol}_time_series.csv", index=False)
+    indicators.to_csv(f"../data/{symbol}_time_series.csv", index=False)
 
 
 if __name__ == "__main__":
