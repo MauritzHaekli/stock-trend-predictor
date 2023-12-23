@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import yaml
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
 from sklearn.model_selection import train_test_split
 
@@ -14,6 +15,7 @@ class DataPreprocessor:
         target column: name of the column for which we want to make a prediction
         validation_size: A number between 0 and 1 to split data into testing and validation sets
         scaler: An sklearn function to preprocess data. Choose for desired purpose
+        target_data: Stock data set by set_target_data(). Datetimes have been dropped, ["target] has been added and shifted according to the trend length, aka the time we want to look into the future.
         X_batched: contains (len(data) - lookback_period) entries. The first entry is a list of the first lookback_period rows of data. X_batched[index][-1] gives you the (index + lookback_period)-th row of data
         y_batched: contains (len(df) - seq_length) entries. The first entry is the "target" column of the seq_length row. X[index][-1][-1] and y[index] are the same "target" value.
         If df has 5000 entries, X.shape y.shape will give you: ((4980, 10, 25), (4980,))
@@ -35,6 +37,7 @@ class DataPreprocessor:
         self.target_column = target_column
         self.validation_size = validation_size
         self.scaler = MinMaxScaler()
+        self.target_data = None
         self.X_batched = None
         self.y_batched = None
         self.X_train_split = None
@@ -45,6 +48,7 @@ class DataPreprocessor:
         self.X_validation_scaled = None
         self.X_testing_scaled = None
 
+        self.set_target_data()
         self.set_lookback_batch()
         self.set_lookback_target()
         self.split_data()
@@ -52,18 +56,31 @@ class DataPreprocessor:
         self.set_scaled_validation_lookback_batch()
         self.set_scaled_testing_lookback_batch()
 
+    def set_target_data(self):
+        with open('config.yaml', 'r') as config_file:
+            config = yaml.safe_load(config_file)
+        raw_data = self.data
+        trend_length = config["data"]["trend_length"]
+        raw_data.index = pd.to_datetime(raw_data['datetime'], format='%Y-%m-%d %H:%M:%S')
+        raw_data.drop(['datetime'], axis=1, inplace=True)
+        raw_data['day_of_week'] = raw_data.index.day_of_week
+        raw_data['hour'] = raw_data.index.hour
+        raw_data['target'] = raw_data['open-trend'].shift(-trend_length, fill_value=0).astype(int)
+        raw_data = raw_data.iloc[trend_length:]
+        self.target_data = raw_data
+
     def set_lookback_batch(self):
         time_series_batch = []
-        for row in range(len(self.data) - self.lookback_period):
-            time_series_batch.append(self.data.iloc[row:row + self.lookback_period].values)
+        for row in range(len(self.target_data) - self.lookback_period):
+            time_series_batch.append(self.target_data.iloc[row:row + self.lookback_period].values)
 
         time_series_batch: [[[]]] = np.array(time_series_batch)
         self.X_batched = time_series_batch
 
     def set_lookback_target(self):
         time_series_target = []
-        for row in range(len(self.data) - self.lookback_period):
-            time_series_target.append(self.data[self.target_column].iloc[row + self.lookback_period - 1])
+        for row in range(len(self.target_data) - self.lookback_period):
+            time_series_target.append(self.target_data[self.target_column].iloc[row + self.lookback_period - 1])
 
         time_series_target: [] = np.array(time_series_target)
         self.y_batched = time_series_target

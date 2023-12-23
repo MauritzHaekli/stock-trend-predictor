@@ -2,7 +2,7 @@ data:
   api_key: "82535d7d9eb84b5d905463e011aaaee8"
   interval: "5min"
   order: "ASC"
-  symbol: "MSFT"
+  symbol: "AMZN"
   output: 5000
   decimal_places: 2
   trend_length: 10

@@ -6,7 +6,7 @@ import pandas as pd
 
 def generate_time_series_csv():
 
-    with open('config.yaml', 'r') as config_file:
+    with open('../config.yaml', 'r') as config_file:
         config = yaml.safe_load(config_file)
 
     api_key: str = config['data']['api_key']
@@ -85,13 +85,6 @@ def generate_time_series_csv():
     indicators: pd.DataFrame = pd.merge(indicators, adx_data, on='datetime')
     indicators: pd.DataFrame = pd.merge(indicators, ema_data, on='datetime')
     indicators: pd.DataFrame = pd.merge(indicators, rsi_data, on='datetime')
-
-    indicators.index = pd.to_datetime(indicators['datetime'], format='%Y-%m-%d %H:%M:%S')
-    indicators.drop(['datetime'], axis=1, inplace=True)
-    indicators['day_of_week'] = indicators.index.day_of_week
-    indicators['hour'] = indicators.index.hour
-    indicators['target'] = indicators['open-trend'].shift(-trend_length, fill_value=0).astype(int)
-    indicators = indicators.iloc[trend_length:]
 
     indicators.to_csv(f"data/{symbol}_time_series.csv", index=False)
 
