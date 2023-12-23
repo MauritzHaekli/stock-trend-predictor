@@ -2,8 +2,10 @@ data:
   api_key: "82535d7d9eb84b5d905463e011aaaee8"
   interval: "5min"
   order: "ASC"
-  symbol: "AMZN"
+  symbol: "MSFT"
   output: 5000
   decimal_places: 2
   trend_length: 10
   column_names: ["open", "high", "low", "close", "volume"]
+  target_column: "target"
+  lookback_period: 20
