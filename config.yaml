@@ -2,11 +2,13 @@ data:
   api_key: "82535d7d9eb84b5d905463e011aaaee8"
   interval: "5min"
   order: "ASC"
-  symbol: "NIO"
+  symbol: "AAPL"
   output: 5000
   decimal_places: 2
   trend_length: 10
-  column_names: ["open", "high", "low", "close", "volume"]
+  trend_columns: ["open", "volume"]
   target_column: "target"
   lookback_period: 20
   validation_size: 0.2
+  epochs: 30
+  batch_size: 8
