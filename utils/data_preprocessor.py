@@ -9,7 +9,7 @@ from typing import Tuple
 class DataPreprocessor:
     def __init__(self, data: pd.DataFrame):
         """
-            This class is used to preprocess raw stock data containing price information and technical indicators in order to optimize neural network performance.
+            This class is used to preprocess raw stock data containing price information and technical indicators (5min) in order to optimize neural network performance.
 
             Attributes:
                 data: raw stock data from a csv file
@@ -99,7 +99,7 @@ class DataPreprocessor:
     def get_target_data(self, trend_data: pd.DataFrame) -> pd.DataFrame:
         target_data: pd.DataFrame = trend_data.copy()
         prediction_target_column_name: str = 'open-trend'
-        columns_to_drop: [str] = ["datetime", "open", "high", "low", "close", "previous open", "open-change", "ema"]
+        columns_to_drop: [str] = ["datetime"]
         target_data.index = pd.to_datetime(target_data['datetime'], format='%Y-%m-%d %H:%M:%S')
         target_data['day_of_week'] = target_data.index.day_of_week
         target_data['hour'] = target_data.index.hour

@@ -10,7 +10,7 @@ class DataPreprocessorValidator(unittest.TestCase):
         TO-DO: Consider shorter lengths of Dataframes
         :return:
         """
-        self.test_data: pd.DataFrame = pd.read_csv('../data/indicators/TSLA_indicators.csv', nrows=500)
+        self.test_data: pd.DataFrame = pd.read_csv('../data/indicators (5min)/TSLA_indicators.csv', nrows=500)
         self.data_preprocessor = DataPreprocessor(self.test_data)
         self.test_trend_length: int = self.data_preprocessor.trend_length
 
