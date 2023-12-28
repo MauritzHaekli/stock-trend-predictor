@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import numpy as np
+import pandas as pd
 
 
 def plot_model_accuracy(accuracy_history):
@@ -43,3 +44,8 @@ def plot_confusion_matrix(target_test_data, target_prediction_data):
                 yticklabels=['Actual 0', 'Actual 1'])
     plt.title('Confusion Matrix')
     plt.show()
+
+
+def plot_correlation_heatmap(dataframe: pd.DataFrame):
+    plt.figure(figsize=(32, 16))
+    sns.heatmap(dataframe.corr(), annot=True, cmap="YlGnBu", fmt=".2f")
