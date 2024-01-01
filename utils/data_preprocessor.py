@@ -2,17 +2,16 @@ import numpy as np
 import pandas as pd
 import yaml
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
-from sklearn.model_selection import train_test_split
 from typing import Tuple
 
 
 class DataPreprocessor:
-    def __init__(self, data: pd.DataFrame):
+    def __init__(self, training_data: pd.DataFrame, validation_data: pd.DataFrame, testing_data: pd.DataFrame):
         """
             This class is used to preprocess raw stock data containing price information and technical indicators (5min) in order to optimize neural network performance.
 
             Attributes:
-                data: raw stock data from a csv file
+                testing_data: raw stock data from a csv file
                 lookback_period: A period with length n we provide for our NN to look back upon, giving it the opportunity to take past periods into account.
                 target column: name of the column for which we want to make a prediction.
                 validation_size: A number between 0 and 1 to split data into testing and validation sets.
@@ -37,26 +36,39 @@ class DataPreprocessor:
         with open('../config.yaml', 'r') as config_file:
             config = yaml.safe_load(config_file)
 
-        self.data: pd.DataFrame = data
         self.validation_size: float = config["data"]["validation_size"]
         self.lookback_period: int = config["data"]["lookback_period"]
         self.target_column: str = config["data"]["target_column"]
         self.trend_length: int = config["data"]["trend_length"]
         self.trend_columns: [str] = config["data"]["trend_columns"]
+
+        self.training_data: pd.DataFrame = training_data
+        self.validation_data: pd.DataFrame = validation_data
+        self.testing_data: pd.DataFrame = testing_data
+
+        self.training_trend_data: pd.DataFrame = self.get_trend_data(self.training_data)
+        self.validation_trend_data: pd.DataFrame = self.get_trend_data(self.validation_data)
+        self.testing_trend_data: pd.DataFrame = self.get_trend_data(self.testing_data)
+
+        self.training_target_data: pd.DataFrame = self.get_target_data(self.training_trend_data)
+        self.validation_target_data: pd.DataFrame = self.get_target_data(self.validation_trend_data)
+        self.testing_target_data: pd.DataFrame = self.get_target_data(self.testing_trend_data)
+
+        self.training_target_data_batched: [[[float]]] = self.get_lookback_batch(self.training_target_data)
+        self.validation_target_data_batched: [[[float]]] = self.get_lookback_batch(self.validation_target_data)
+        self.testing_target_data_batched: [[[float]]] = self.get_lookback_batch(self.testing_target_data)
+
+        self.training_target_data_batched_target: [float] = self.get_lookback_target(self.training_target_data)
+        self.validation_target_data_batched_target: [float] = self.get_lookback_target(self.validation_target_data)
+        self.testing_target_data_batched_target: [float] = self.get_lookback_target(self.testing_target_data)
+
         self.scaler = StandardScaler()
-        self.trend_data: pd.DataFrame = self.get_trend_data(self.data)
-        self.target_data: pd.DataFrame = self.get_target_data(self.trend_data)
-        self.X_batched: [[[float]]] = self.get_lookback_batch()
-        self.y_batched: [float] = self.get_lookback_target()
-        self.X_train_split: [[[float]]] = self.get_split_data()[0]
-        self.y_train_split: [float] = self.get_split_data()[2]
-        self.X_validation_split: [[[float]]] = self.get_split_data()[1]
-        self.y_validation_split: [float] = self.get_split_data()[3]
+
         self.X_train_scaled: [[[float]]] = self.get_scaled_data()[0]
         self.X_validation_scaled: [[[float]]] = self.get_scaled_data()[1]
         self.X_testing_scaled: [[[float]]] = self.get_scaled_data()[2]
 
-    def get_trend_data(self, time_series_data: pd.DataFrame) -> pd.DataFrame:
+    def get_trend_data(self, data: pd.DataFrame) -> pd.DataFrame:
 
         """
         This function takes the raw time series data of a stock and applies calculations about changes, previous data and trends of several columns like "open" and "volume" to each row.
@@ -64,10 +76,12 @@ class DataPreprocessor:
         {column_name} entry 10 rows before.
         The "{column_name}-change" columns should contain the difference of the current {column_name} entry minus the {column_name} entry a trend_length ago.
         The "{column_name}-trend" columns should contain a binary indicator (0 or 1) to indicate, if {column_name} has decreased or increased since trend_length ago
-        :param time_series_data: A pandas dataframe containing stock data time series 
+        :param data: A pandas dataframe containing stock data time series
+
         :return applied_trend_dataframe: A pandas dataframe in which price comparisons and trends have been added
         """
-        trend_dataframe: pd.DataFrame = time_series_data.copy()
+        trend_dataframe: pd.DataFrame = data.copy()
+
         trend_increased: int = 1
         trend_decreased: int = 0
         decimal_places: int = 2
@@ -77,7 +91,7 @@ class DataPreprocessor:
             applied_change_column_name: str = f"{column_name}-change"
             applied_trend_column_name: str = f"{column_name}-trend"
             not_computable_placeholder: int = 0
-            for entry in range(len(time_series_data)):
+            for entry in range(len(data)):
                 if entry < self.trend_length:
                     trend_dataframe.loc[entry, applied_comparison_column_name] = not_computable_placeholder
                     trend_dataframe.loc[entry, applied_change_column_name] = not_computable_placeholder
@@ -108,34 +122,30 @@ class DataPreprocessor:
         target_data = target_data.iloc[self.trend_length:]
         return target_data
 
-    def get_lookback_batch(self) -> [[[float]]]:
+    def get_lookback_batch(self, data: pd.DataFrame) -> [[[float]]]:
         time_series_batch = []
-        for row in range(len(self.target_data) - self.lookback_period):
-            time_series_batch.append(self.target_data.iloc[row:row + self.lookback_period].values)
+        for row in range(len(data) - self.lookback_period):
+            time_series_batch.append(data.iloc[row:row + self.lookback_period].values)
 
         time_series_batch: [[[float]]] = np.array(time_series_batch)
         return time_series_batch
 
-    def get_lookback_target(self) -> [float]:
+    def get_lookback_target(self, data: pd.DataFrame) -> [float]:
         time_series_target = []
-        for row in range(len(self.target_data) - self.lookback_period):
-            time_series_target.append(self.target_data[self.target_column].iloc[row + self.lookback_period - 1])
+        for row in range(len(data) - self.lookback_period):
+            time_series_target.append(data[self.target_column].iloc[row + self.lookback_period - 1])
 
         time_series_target: [float] = np.array(time_series_target)
         return time_series_target
 
-    def get_split_data(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        x_train_split, x_validation_split, y_train_split, y_validation_split = train_test_split(self.X_batched, self.y_batched, test_size=self.validation_size, random_state=42)
-        return x_train_split, x_validation_split, y_train_split, y_validation_split
-
     def get_scaled_data(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         # Fit the scaler only on the training data
-        self.scaler.fit(self.X_train_split.reshape(-1, self.X_train_split.shape[-1]))
+        self.scaler.fit(self.training_target_data_batched.reshape(-1, self.training_target_data_batched.shape[-1]))
 
         # Transform the training, validation, and testing data using the same scaler
-        x_train_scaled = self.scaler.transform(self.X_train_split.reshape(-1, self.X_train_split.shape[-1])).reshape(self.X_train_split.shape)
-        x_validation_scaled = self.scaler.transform(self.X_validation_split.reshape(-1, self.X_validation_split.shape[-1])).reshape(self.X_validation_split.shape)
-        x_testing_scaled = self.scaler.transform(self.X_batched.reshape(-1, self.X_batched.shape[-1])).reshape(self.X_batched.shape)
+        x_train_scaled = self.scaler.transform(self.training_target_data_batched.reshape(-1, self.training_target_data_batched.shape[-1])).reshape(self.training_target_data_batched.shape)
+        x_validation_scaled = self.scaler.transform(self.validation_target_data_batched.reshape(-1, self.validation_target_data_batched.shape[-1])).reshape(self.validation_target_data_batched.shape)
+        x_testing_scaled = self.scaler.transform(self.testing_target_data_batched.reshape(-1, self.testing_target_data_batched.shape[-1])).reshape(self.testing_target_data_batched.shape)
 
         return x_train_scaled, x_validation_scaled, x_testing_scaled
 
