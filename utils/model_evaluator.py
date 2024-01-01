@@ -5,15 +5,23 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 class ModelEvaluator:
     def __init__(self, test_loss, y_test, y_pred):
         self.test_loss = test_loss
-        self.accuracy = accuracy_score(y_test, y_pred)
-        self.precision = precision_score(y_test, y_pred)
-        self.recall = recall_score(y_test, y_pred)
-        self.f1 = f1_score(y_test, y_pred)
-        self.roc_auc = roc_auc_score(y_test, y_pred)
+        self.accuracy: float = accuracy_score(y_test, y_pred)
+        self.precision: float = precision_score(y_test, y_pred)
+        self.recall: float = recall_score(y_test, y_pred)
+        self.f1: float = f1_score(y_test, y_pred)
+        try:
+            self.roc_auc: float = roc_auc_score(y_test, y_pred)
+        except ValueError as error:
+            if "Only one class present in y_true" in str(error):
+                self.roc_auc: float = 0
+                print("ROC AUC score is not defined when only one class is present.")
+            else:
+                # Re-raise the exception if it's not the expected one
+                raise error
 
-        self.evaluation_metrics = self.get_metrics_data()
+        self.evaluation_metrics: pd.DataFrame = self.get_evaluation_metrics()
 
-    def get_metrics_data(self):
+    def get_evaluation_metrics(self):
         metrics_data = {
             'Metric': ['Loss', 'Accuracy', 'Precision', 'Recall', 'F1Score', 'ROC AUC'],
             'Score': [self.test_loss, self.accuracy, self.precision, self.recall, self.f1, self.roc_auc]
