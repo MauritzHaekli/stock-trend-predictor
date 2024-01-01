@@ -20,6 +20,8 @@ def generate_time_series_csv():
     response_values: str = "values"
     time_series_indicator: str = "time_series"
 
+    save_file_path: str = f"../data/indicators ({interval})/{symbol}_indicators.csv"
+
     def get_response_values(indicator: str, ) -> pd.DataFrame:
         url: str = f"https://api.twelvedata.com/{indicator}?symbol={symbol}&interval={interval}&order={order}&dp={decimal_places}&outputsize={output}&apikey={api_key}"
         response = requests.get(url)
@@ -52,7 +54,8 @@ def generate_time_series_csv():
     indicators: pd.DataFrame = pd.merge(indicators, ema_data, on='datetime')
     indicators: pd.DataFrame = pd.merge(indicators, rsi_data, on='datetime')
 
-    indicators.to_csv(f"../data/indicators ({interval})/{symbol}_indicators.csv", index=False)
+    indicators.to_csv(save_file_path, index=False)
+    print(f"File saved to: {save_file_path}")
 
 
 if __name__ == "__main__":
