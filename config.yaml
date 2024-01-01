@@ -1,14 +1,14 @@
 data:
   api_key: "82535d7d9eb84b5d905463e011aaaee8"
-  interval: "1min"
+  interval: "1h"
   order: "ASC"
-  symbol: "NVDA"
+  symbol: "AMD"
   output: 5000
   decimal_places: 2
-  trend_length: 10
-  trend_columns: ["open", "volume"]
+  trend_length: 60
+  trend_columns: ["open", "high", "low", "close", "volume"]
   target_column: "target"
-  lookback_period: 20
+  lookback_period: 10
   validation_size: 0.2
   epochs: 30
-  batch_size: 8
+  batch_size: 2
