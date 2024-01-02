@@ -10,7 +10,7 @@ class StockTrendLSTMModel:
     def __init__(self, input_shape, training_data, training_data_target, validation_data, validation_data_target, epochs: int, batch_size: int):
         self.model = None
         self.input_shape = input_shape
-        self.save_name = "StockTrendLSTM"
+        self.save_name: str = "StockTrendLSTM"
         self.model_save_path: str = f"../models/saved models/trained_{self.save_name}_model.keras"
         self.training_data = training_data
         self.training_data_target = training_data_target

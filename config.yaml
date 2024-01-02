@@ -1,14 +1,14 @@
 data:
   api_key: "82535d7d9eb84b5d905463e011aaaee8"
-  interval: "1h"
+  interval: "5min"
   order: "ASC"
-  symbol: "AMD"
+  symbol: "AMZN"
   output: 5000
   decimal_places: 2
-  trend_length: 60
+  trend_length: 12
   trend_columns: ["open", "high", "low", "close", "volume"]
   target_column: "target"
-  lookback_period: 10
+  lookback_period: 30
   validation_size: 0.2
-  epochs: 30
+  epochs: 15
   batch_size: 2
