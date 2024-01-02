@@ -1,72 +1,38 @@
 import numpy as np
 import pandas as pd
 import yaml
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
-from typing import Tuple
 
 
 class DataPreprocessor:
-    def __init__(self, training_data: pd.DataFrame, validation_data: pd.DataFrame, testing_data: pd.DataFrame):
+    def __init__(self, stock_time_series: pd.DataFrame):
+
         """
-            This class is used to preprocess raw stock data containing price information and technical indicators (5min) in order to optimize neural network performance.
-
-            Attributes:
-                testing_data: raw stock data from a csv file
-                lookback_period: A period with length n we provide for our NN to look back upon, giving it the opportunity to take past periods into account.
-                target column: name of the column for which we want to make a prediction.
-                validation_size: A number between 0 and 1 to split data into testing and validation sets.
-                trend_length: The length that we we try to predict. Trend_length of 10 means we want to predict, what happens in 10 iterations.
-                scaler: An sklearn function to preprocess data. Choose for desired purpose.
-                target_data: Stock data set by set_target_data(). Datetime column and price columns have been dropped, "target" column has been added and shifted according to the trend length.
-                X_batched: contains (len(data) - lookback_period) entries. The first entry is a list of the first lookback_period rows of data. X_batched[index][-1] gives you the (index + lookback_period)-th row of data
-                y_batched: contains (len(df) - seq_length) entries. The first entry is the "target" column of the seq_length row.
-                If self.data has 5000 entries, X.shape, y.shape will give you: ((4980, 10, 25), (4980,)).
-
-                X_train_split: Split unscaled training set derived from X_batched
-                y_train_split: Split unscaled training target set derived from y_batched
-                X_validation; Split unscaled validation set derived from X_batched
-                y_validation_split: Split unscaled training target set derived from y_batched
-
-                X_train_scaled: Scaled training set derived from X_train_split
-                X_validation_scaled: Scaled training set derived from X_validation_split
-                X_train_scaled: Scaled training set derived from X_batched. Since we want to test the NN on unseen data, no split has been performed prior
-
-            """
+        This class is used to preprocess stock data time series in order to use it in a LSTM Neural Network. Scaling hasnt been performed yet.
+        :param stock_time_series: Raw stock data containing a time series with price information and technical indicators.
+        :param self.lookback_period: A period we provide for the LSTM to look back upon for each time point to make a prediction.
+        :param self.target_column: The column we want to make a prediction for.
+        :param self.trend_length: The period we try to predict into the future. Trend length of 10 means, we try to make a prediction for what happens in 10 time series steps.
+        :param self.trend_columns: A list of columns in stock_time_series for which we want to calculate a trend (0 or 1).
+        :param self.trend_data: A pandas DataFrame containing price information, technical indicators and calculated trends in self.trend_columns.
+        :param self.target_data: In addition to trend_data, this pandas DataFrame contains a target column with the label we try to predict. Target data has been shifted "upwards" according to self.trend_length.
+        :param self.target_data_batched: A np.array containing lists of size self.lookback_period to feed into our LSTM. Entries are still unscaled.
+        :param self.target_data_batched_target: A np.array of all the labels we try to predict.
+        """
 
         with open('../config.yaml', 'r') as config_file:
             config = yaml.safe_load(config_file)
 
-        self.validation_size: float = config["data"]["validation_size"]
         self.lookback_period: int = config["data"]["lookback_period"]
         self.target_column: str = config["data"]["target_column"]
         self.trend_length: int = config["data"]["trend_length"]
         self.trend_columns: [str] = config["data"]["trend_columns"]
 
-        self.training_data: pd.DataFrame = training_data
-        self.validation_data: pd.DataFrame = validation_data
-        self.testing_data: pd.DataFrame = testing_data
+        self.stock_time_series: pd.DataFrame = stock_time_series
 
-        self.training_trend_data: pd.DataFrame = self.get_trend_data(self.training_data)
-        self.validation_trend_data: pd.DataFrame = self.get_trend_data(self.validation_data)
-        self.testing_trend_data: pd.DataFrame = self.get_trend_data(self.testing_data)
-
-        self.training_target_data: pd.DataFrame = self.get_target_data(self.training_trend_data)
-        self.validation_target_data: pd.DataFrame = self.get_target_data(self.validation_trend_data)
-        self.testing_target_data: pd.DataFrame = self.get_target_data(self.testing_trend_data)
-
-        self.training_target_data_batched: [[[float]]] = self.get_lookback_batch(self.training_target_data)
-        self.validation_target_data_batched: [[[float]]] = self.get_lookback_batch(self.validation_target_data)
-        self.testing_target_data_batched: [[[float]]] = self.get_lookback_batch(self.testing_target_data)
-
-        self.training_target_data_batched_target: [float] = self.get_lookback_target(self.training_target_data)
-        self.validation_target_data_batched_target: [float] = self.get_lookback_target(self.validation_target_data)
-        self.testing_target_data_batched_target: [float] = self.get_lookback_target(self.testing_target_data)
-
-        self.scaler = StandardScaler()
-
-        self.X_train_scaled: [[[float]]] = self.get_scaled_data()[0]
-        self.X_validation_scaled: [[[float]]] = self.get_scaled_data()[1]
-        self.X_testing_scaled: [[[float]]] = self.get_scaled_data()[2]
+        self.trend_data: pd.DataFrame = self.get_trend_data(self.stock_time_series)
+        self.target_data: pd.DataFrame = self.get_target_data(self.trend_data)
+        self.target_data_batched: [[[float]]] = self.get_lookback_batch(self.target_data)
+        self.target_data_batched_target: [float] = self.get_lookback_target(self.target_data)
 
     def get_trend_data(self, data: pd.DataFrame) -> pd.DataFrame:
 
@@ -137,15 +103,4 @@ class DataPreprocessor:
 
         time_series_target: [float] = np.array(time_series_target)
         return time_series_target
-
-    def get_scaled_data(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        # Fit the scaler only on the training data
-        self.scaler.fit(self.training_target_data_batched.reshape(-1, self.training_target_data_batched.shape[-1]))
-
-        # Transform the training, validation, and testing data using the same scaler
-        x_train_scaled = self.scaler.transform(self.training_target_data_batched.reshape(-1, self.training_target_data_batched.shape[-1])).reshape(self.training_target_data_batched.shape)
-        x_validation_scaled = self.scaler.transform(self.validation_target_data_batched.reshape(-1, self.validation_target_data_batched.shape[-1])).reshape(self.validation_target_data_batched.shape)
-        x_testing_scaled = self.scaler.transform(self.testing_target_data_batched.reshape(-1, self.testing_target_data_batched.shape[-1])).reshape(self.testing_target_data_batched.shape)
-
-        return x_train_scaled, x_validation_scaled, x_testing_scaled
 

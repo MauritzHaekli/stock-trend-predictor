@@ -7,7 +7,7 @@ class DataPreprocessorValidator(unittest.TestCase):
     def setUp(self):
 
         """
-        TO-DO: Consider shorter lengths of Dataframes
+        This class validates the calculations and data integrity used in DataPreprocessor. Considering performance the number of tested data rows has been capped at 500.
         :return:
         """
         self.test_data: pd.DataFrame = pd.read_csv('../data/indicators (5min)/TSLA_indicators.csv', nrows=500)
@@ -24,7 +24,7 @@ class DataPreprocessorValidator(unittest.TestCase):
             self.assertIn(column_name, self.test_trend_data.columns,
                           f"Price column '{column_name}' does not exist in the DataFrame.")
 
-    def test__calculated_previous_open(self):
+    def test_calculated_previous_open(self):
         decimal_places: int = 2
 
         for index in range(self.test_trend_length, len(self.test_trend_data)):
