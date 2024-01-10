@@ -1,10 +1,12 @@
-data:
+twelvedata:
   api_key: "82535d7d9eb84b5d905463e011aaaee8"
   interval: "1h"
   order: "ASC"
-  symbol: "PG"
+  symbol: "MSFT"
   output: 5000
   decimal_places: 2
+  time_series_key: "time_series"
+model:
   trend_length: 1
   trend_columns: ["open", "high", "low", "close", "volume", "percent_b", "macd", "macd_signal", "macd_hist", "adx", "ema", "rsi"]
   target_column: "target"

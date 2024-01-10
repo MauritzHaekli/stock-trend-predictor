@@ -9,18 +9,16 @@ def generate_time_series_csv():
     with open('../config.yaml', 'r') as config_file:
         config = yaml.safe_load(config_file)
 
-    api_key: str = config['data']['api_key']
-    interval: str = config['data']['interval']
-    order: str = config['data']['order']
-    symbol: str = config['data']['symbol']
-    output: float = config['data']['output']
-    decimal_places = config['data']['decimal_places']
+    api_key: str = config['twelvedata']['api_key']
+    time_series_key: str = config['twelvedata']['time_series_key']
+    interval: str = config['twelvedata']['interval']
+    order: str = config['twelvedata']['order']
+    symbol: str = config['twelvedata']['symbol']
+    output: float = config['twelvedata']['output']
+    decimal_places = config['twelvedata']['decimal_places']
 
     dataframe_key: str = "datetime"
     response_values: str = "values"
-    time_series_indicator: str = "time_series"
-
-    save_file_path: str = f"../data/indicators ({interval})/{symbol}_indicators.csv"
 
     def get_time_series(indicator: str, ) -> pd.DataFrame:
         url: str = f"https://api.twelvedata.com/{indicator}?symbol={symbol}&interval={interval}&order={order}&dp={decimal_places}&outputsize={output}&apikey={api_key}"
@@ -34,27 +32,10 @@ def generate_time_series_csv():
         else:
             return dataframe
 
-    time_series: pd.DataFrame = get_time_series(time_series_indicator)
+    time_series: pd.DataFrame = get_time_series(time_series_key)
 
-    bollinger_indicator: str = "percent_b"
-    macd_indicator: str = "macd"
-    adx_indicator: str = "adx"
-    ema_indicator: str = "ema"
-    rsi_indicator: str = "rsi"
-
-    bollinger_bands_data: pd.DataFrame = get_time_series(bollinger_indicator)
-    macd_data: pd.DataFrame = get_time_series(macd_indicator)
-    adx_data: pd.DataFrame = get_time_series(adx_indicator)
-    ema_data: pd.DataFrame = get_time_series(ema_indicator)
-    rsi_data: pd.DataFrame = get_time_series(rsi_indicator)
-
-    indicators: pd.DataFrame = pd.merge(time_series, bollinger_bands_data, on='datetime')
-    indicators: pd.DataFrame = pd.merge(indicators, macd_data, on='datetime')
-    indicators: pd.DataFrame = pd.merge(indicators, adx_data, on='datetime')
-    indicators: pd.DataFrame = pd.merge(indicators, ema_data, on='datetime')
-    indicators: pd.DataFrame = pd.merge(indicators, rsi_data, on='datetime')
-
-    indicators.to_csv(save_file_path, index=False)
+    save_file_path: str = f"../data/twelvedata/time series ({interval})/{symbol}_time_series.csv"
+    time_series.to_csv(save_file_path, index=False)
     print(f"File saved to: {save_file_path}")
 
 
