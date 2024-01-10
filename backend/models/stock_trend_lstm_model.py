@@ -1,5 +1,5 @@
 import time
-from keras.layers import LSTM, Dropout, Dense
+from keras.layers import LSTM, Dropout, Dense, Bidirectional
 from keras.models import Sequential
 from keras.regularizers import l2
 from keras.callbacks import EarlyStopping
@@ -23,7 +23,7 @@ class StockTrendLSTMModel:
     def build_model(self):
         self.model = Sequential()
         self.model.add(LSTM(50, input_shape=self.input_shape))
-        self.model.add(Dropout(0.2))
+        # self.model.add(Dropout(0.2))
         self.model.add(Dense(1, activation='sigmoid', kernel_regularizer=l2(0.001)))
 
         learning_rate = 0.0001
@@ -31,7 +31,7 @@ class StockTrendLSTMModel:
         self.model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
 
     def train(self):
-        early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True, min_delta=0.001)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, min_delta=0.001, start_from_epoch=40)
 
         start_time = time.time()
         history = self.model.fit(self.training_data, self.training_data_target, epochs=self.epochs, batch_size=self.batch_size, validation_data=(self.validation_data, self.validation_data_target), callbacks=[early_stopping])

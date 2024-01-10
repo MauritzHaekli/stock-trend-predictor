@@ -32,7 +32,7 @@ class DataPreprocessor:
         self.trend_data: pd.DataFrame = self.get_trend_data(self.stock_time_series)
         self.target_data: pd.DataFrame = self.get_target_data(self.trend_data)
         self.target_data_batched: [[[float]]] = self.get_lookback_batch(self.target_data)
-        self.target_data_batched_target: [float] = self.get_lookback_target(self.target_data)
+        self.target_data_batched_labels: [float] = self.get_lookback_labels(self.target_data)
 
     def get_trend_data(self, data: pd.DataFrame) -> pd.DataFrame:
 
@@ -78,7 +78,7 @@ class DataPreprocessor:
 
     def get_target_data(self, trend_data: pd.DataFrame) -> pd.DataFrame:
         target_data: pd.DataFrame = trend_data.copy()
-        prediction_target_column_name: str = 'open-trend'
+        prediction_target_column_name: str = 'close-trend'
         columns_to_drop: [str] = ["datetime"]
         target_data.index = pd.to_datetime(target_data['datetime'], format='%Y-%m-%d %H:%M:%S')
         target_data['day_of_week'] = target_data.index.day_of_week
@@ -89,17 +89,18 @@ class DataPreprocessor:
         return target_data
 
     def get_lookback_batch(self, data: pd.DataFrame) -> [[[float]]]:
-        time_series_batch = []
-        for row in range(len(data) - self.lookback_period):
-            time_series_batch.append(data.iloc[row:row + self.lookback_period].values)
+        time_series_batch: [[[float]]] = []
+        value_df: pd.DataFrame = data.drop("target", axis=1)
+        for row in range(len(value_df) - self.lookback_period):
+            time_series_batch.append(value_df.iloc[row + 1:row + self.lookback_period + 1].values)
 
-        time_series_batch: [[[float]]] = np.array(time_series_batch)
+        time_series_batch = np.array(time_series_batch)
         return time_series_batch
 
-    def get_lookback_target(self, data: pd.DataFrame) -> [float]:
+    def get_lookback_labels(self, data: pd.DataFrame) -> [float]:
         time_series_target = []
         for row in range(len(data) - self.lookback_period):
-            time_series_target.append(data[self.target_column].iloc[row + self.lookback_period - 1])
+            time_series_target.append(data[self.target_column].iloc[row + self.lookback_period])
 
         time_series_target: [float] = np.array(time_series_target)
         return time_series_target

@@ -1,14 +1,15 @@
 data:
   api_key: "82535d7d9eb84b5d905463e011aaaee8"
-  interval: "5min"
+  interval: "1h"
   order: "ASC"
-  symbol: "AMZN"
+  symbol: "PG"
   output: 5000
   decimal_places: 2
-  trend_length: 12
-  trend_columns: ["open", "high", "low", "close", "volume"]
+  trend_length: 1
+  trend_columns: ["open", "high", "low", "close", "volume", "percent_b", "macd", "macd_signal", "macd_hist", "adx", "ema", "rsi"]
   target_column: "target"
-  lookback_period: 30
-  validation_size: 0.2
-  epochs: 10
-  batch_size: 2
+  lookback_period: 3
+  epochs: 100
+  batch_size: 32
+alpha_vantage:
+  api_key: "HXDV0GQ1ICS8H8FV"

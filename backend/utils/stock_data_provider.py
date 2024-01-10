@@ -20,9 +20,9 @@ def generate_time_series_csv():
     response_values: str = "values"
     time_series_indicator: str = "time_series"
 
-    save_file_path: str = f"../backend/data/indicators ({interval})/{symbol}_indicators.csv"
+    save_file_path: str = f"../data/indicators ({interval})/{symbol}_indicators.csv"
 
-    def get_response_values(indicator: str, ) -> pd.DataFrame:
+    def get_time_series(indicator: str, ) -> pd.DataFrame:
         url: str = f"https://api.twelvedata.com/{indicator}?symbol={symbol}&interval={interval}&order={order}&dp={decimal_places}&outputsize={output}&apikey={api_key}"
         response = requests.get(url)
         values: json = response.json().get(response_values, [])
@@ -34,7 +34,7 @@ def generate_time_series_csv():
         else:
             return dataframe
 
-    time_series: pd.DataFrame = get_response_values(time_series_indicator)
+    time_series: pd.DataFrame = get_time_series(time_series_indicator)
 
     bollinger_indicator: str = "percent_b"
     macd_indicator: str = "macd"
@@ -42,11 +42,11 @@ def generate_time_series_csv():
     ema_indicator: str = "ema"
     rsi_indicator: str = "rsi"
 
-    bollinger_bands_data: pd.DataFrame = get_response_values(bollinger_indicator)
-    macd_data: pd.DataFrame = get_response_values(macd_indicator)
-    adx_data: pd.DataFrame = get_response_values(adx_indicator)
-    ema_data: pd.DataFrame = get_response_values(ema_indicator)
-    rsi_data: pd.DataFrame = get_response_values(rsi_indicator)
+    bollinger_bands_data: pd.DataFrame = get_time_series(bollinger_indicator)
+    macd_data: pd.DataFrame = get_time_series(macd_indicator)
+    adx_data: pd.DataFrame = get_time_series(adx_indicator)
+    ema_data: pd.DataFrame = get_time_series(ema_indicator)
+    rsi_data: pd.DataFrame = get_time_series(rsi_indicator)
 
     indicators: pd.DataFrame = pd.merge(time_series, bollinger_bands_data, on='datetime')
     indicators: pd.DataFrame = pd.merge(indicators, macd_data, on='datetime')
