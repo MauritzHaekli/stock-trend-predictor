@@ -2,16 +2,20 @@ twelvedata:
   api_key: "82535d7d9eb84b5d905463e011aaaee8"
   interval: "1h"
   order: "ASC"
-  symbol: "MSFT"
+  symbol: "MO"
   output: 5000
   decimal_places: 2
   time_series_key: "time_series"
+preprocess:
+  stock_symbols: ["AAPL", "ABBV", "AMD", "AMZN", "AZN", "BA", "BABA", "BAC", "BMY", "BP", "CSCO", "CVS", "DIS", "ENB", "GILD", "GOOG", "INFY", "INTC", "JPM", "KO", "META", "MO", "MRK", "MSFT", "MU", "NEE", "NKE", "NVDA", "ORCL", "OTIS", "PANW", "PFE", "PG", "RTX", "SHEL", "SHOP", "SMCI", "T", "TSLA", "TSM", "UBER", "VZ", "WFC", "WMT", "XOM"]
+  trend_length: 2
+  target_column_name: "target"
+  target_change_column_name: "target change"
+  target_trend_column_name: "target trend"
+  target_column: "open"
+  lookback_period: 1
 model:
-  trend_length: 1
-  trend_columns: ["open", "high", "low", "close", "volume", "percent_b", "macd", "macd_signal", "macd_hist", "adx", "ema", "rsi"]
-  target_column: "target"
-  lookback_period: 3
-  epochs: 100
-  batch_size: 32
+  epochs: 50
+  batch_size: 256
 alpha_vantage:
   api_key: "HXDV0GQ1ICS8H8FV"
