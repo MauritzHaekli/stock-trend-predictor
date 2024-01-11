@@ -22,8 +22,10 @@ class StockTrendLSTMModel:
 
     def build_model(self):
         self.model = Sequential()
-        self.model.add(LSTM(50, input_shape=self.input_shape))
-        # self.model.add(Dropout(0.2))
+        self.model.add(LSTM(50, input_shape=self.input_shape, return_sequences=True))
+        self.model.add(Dropout(0.2))
+        self.model.add(LSTM(30))
+        self.model.add(Dropout(0.2))
         self.model.add(Dense(1, activation='sigmoid', kernel_regularizer=l2(0.001)))
 
         learning_rate = 0.0001
@@ -31,7 +33,14 @@ class StockTrendLSTMModel:
         self.model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
 
     def train(self):
-        early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, min_delta=0.001, start_from_epoch=40)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, min_delta=0.001, start_from_epoch=10)
+
+        input_shape_weights = (self.input_shape[0] + 1) * 50
+        first_lstm_weights = (50 + 1) * 30
+        second_lstm_weights = (30 + 1) * 1
+
+        total_weights = input_shape_weights + first_lstm_weights + second_lstm_weights
+        print(f"Total number of weights in the model: {total_weights}")
 
         start_time = time.time()
         history = self.model.fit(self.training_data, self.training_data_target, epochs=self.epochs, batch_size=self.batch_size, validation_data=(self.validation_data, self.validation_data_target), callbacks=[early_stopping])
