@@ -6,7 +6,7 @@ from ta.volume import VolumePriceTrendIndicator
 from feature_column_names import FeatureColumnNames
 
 
-class TechnicalIndicatorCalculator:
+class TechnicalIndicatorProvider:
     def __init__(self, time_series: pd.DataFrame):
         self.column_names = FeatureColumnNames()
         self.bollinger_period: int = 20
