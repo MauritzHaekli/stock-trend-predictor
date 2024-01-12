@@ -49,6 +49,8 @@ class DataPreprocessor:
         """
         trend_dataframe: pd.DataFrame = data.copy()
         trend_dataframe[self.target_change_column_name] = trend_dataframe[self.target_column].pct_change(periods=self.trend_length).round(4)
+        # Do a for loop that creates lags from 1 until self.trend-length so shift from 1 to trend-length. t get target change from -1 to -self.trend-length
+
         trend_dataframe[self.target_trend_column_name] = (trend_dataframe[self.target_change_column_name] > 0).astype(int)
 
         return trend_dataframe
