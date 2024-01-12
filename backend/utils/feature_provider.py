@@ -1,6 +1,6 @@
 import pandas as pd
 from feature_column_names import FeatureColumnNames
-from technical_indicator_calculator import TechnicalIndicatorCalculator
+from technical_indicator_provider import TechnicalIndicatorProvider
 
 
 class FeatureCalculator:
@@ -16,7 +16,7 @@ class FeatureCalculator:
         self.cutoff: int = 30
 
         self.column_names: FeatureColumnNames = FeatureColumnNames()
-        self.technical_indicators: TechnicalIndicatorCalculator = TechnicalIndicatorCalculator(time_series)
+        self.technical_indicators: TechnicalIndicatorProvider = TechnicalIndicatorProvider(time_series)
 
         self.time_series: pd.DataFrame = time_series
         self.feature_time_series: pd.DataFrame = self.get_feature_time_series(self.time_series)
@@ -43,13 +43,13 @@ class FeatureCalculator:
         feature_data['hour']: pd.Series = feature_data.index.hour
 
         feature_data['open change']: pd.Series = self.get_price_change(self.column_names.open_price)
-        feature_data['high change']: pd.Series = self.get_price_change(self.column_names.high_price), self.trend_shift
+        feature_data['high change']: pd.Series = self.get_price_change(self.column_names.high_price)
         feature_data['low change']: pd.Series = self.get_price_change(self.column_names.low_price)
         feature_data['close change']: pd.Series = self.get_price_change(self.column_names.close_price)
 
         feature_data['price movement']: pd.Series = self.get_price_difference(self.column_names.open_price, self.column_names.close_price)
         feature_data['price range']: pd.Series = self.get_price_difference(self.column_names.low_price, self.column_names.high_price)
-        feature_data['price trend']: pd.Series = self.get_current_trend(self.column_names.price_movement)
+        feature_data['price trend']: pd.Series = self.get_current_trend()
 
         feature_data['open trend']: pd.Series = self.get_recent_trend(self.column_names.open_price, self.trend_shift)
         feature_data['high trend']: pd.Series = self.get_recent_trend(self.column_names.open_price, self.trend_shift)
@@ -65,13 +65,14 @@ class FeatureCalculator:
         return ((self.time_series[self.column_names.open_price] - self.technical_indicators.bb.bollinger_lband()) / (self.technical_indicators.bb.bollinger_hband() - self.technical_indicators.bb.bollinger_lband())).round(self.decimal_place)
 
     def get_price_change(self, price_name: str) -> pd.Series:
-        return self.time_series[price_name].pct_change(periods=self.trend_shift).round(self.decimal_place)
+        return self.time_series[price_name].pct_change().round(self.decimal_place)
 
     def get_price_difference(self, starting_price: str, final_price: str) -> pd.Series:
         return (self.time_series[final_price] - self.time_series[starting_price]).round(self.decimal_place)
 
-    def get_current_trend(self, trend_name: str) -> pd.Series:
-        return (self.time_series[trend_name] > 0).astype(int)
+    def get_current_trend(self) -> pd.Series:
+        current_price_differences: pd.Series = self.get_price_difference(self.column_names.open_price, self.column_names.close_price)
+        return (current_price_differences > 0).astype(int)
 
     def get_recent_trend(self, trend_name: str, trend_length) -> pd.Series:
         return (self.time_series[trend_name] > self.time_series[trend_name].shift(trend_length)).astype(int)

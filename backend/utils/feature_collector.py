@@ -1,6 +1,6 @@
 import yaml
 import pandas as pd
-from feature_calculator import FeatureCalculator
+from feature_provider import FeatureCalculator
 
 
 with open('../config.yaml', 'r') as config_file:
@@ -10,7 +10,7 @@ with open('../config.yaml', 'r') as config_file:
     time_series_interval: str = config['feature_engineering']['time_series_interval']
 
 
-def generate_feature_dataframe(symbols: [str], interval: str):
+def collect_feature_data(symbols: [str], interval: str):
 
     for symbol in symbols:
 
@@ -26,4 +26,4 @@ def generate_feature_dataframe(symbols: [str], interval: str):
 
 
 if __name__ == "__main__":
-    generate_feature_dataframe(stock_symbols, time_series_interval)
+    collect_feature_data(stock_symbols, time_series_interval)
