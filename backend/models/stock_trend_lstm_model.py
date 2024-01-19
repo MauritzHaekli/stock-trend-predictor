@@ -1,5 +1,5 @@
 import time
-from keras.layers import LSTM, Dropout, Dense, Bidirectional
+from keras.layers import LSTM, Dropout, Dense
 from keras.models import Sequential
 from keras.regularizers import l2
 from keras.callbacks import EarlyStopping
