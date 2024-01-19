@@ -10,7 +10,7 @@ class DataPreprocessorValidator(unittest.TestCase):
         This class validates the calculations and data integrity used in DataPreprocessor. Considering performance the number of tested data rows has been capped at 500.
         :return:
         """
-        self.test_data: pd.DataFrame = pd.read_csv('../data/indicators (5min)/TSLA_indicators.csv', nrows=500)
+        self.test_data: pd.DataFrame = pd.read_csv('../data/twelvedata/feature time series (1h)/TSLA_feature_time_series.csv', nrows=500)
         self.data_preprocessor = DataPreprocessor(self.test_data)
         self.test_trend_length: int = self.data_preprocessor.trend_length
 
