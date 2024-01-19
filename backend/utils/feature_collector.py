@@ -1,6 +1,6 @@
 import yaml
 import pandas as pd
-from feature_provider import FeatureCalculator
+from feature_provider import FeatureProvider
 
 
 with open('../config.yaml', 'r') as config_file:
@@ -17,8 +17,8 @@ def collect_feature_data(symbols: [str], interval: str):
         csv_file_path: str = f"../data/twelvedata/time series ({interval})/{symbol}_time_series.csv"
 
         time_series: pd.DataFrame = pd.read_csv(csv_file_path)
-        feature_calculator = FeatureCalculator(time_series)
-        feature_time_series: pd.DataFrame = feature_calculator.feature_time_series
+        feature_provider = FeatureProvider(time_series)
+        feature_time_series: pd.DataFrame = feature_provider.feature_time_series
 
         save_file_path: str = f"../data/twelvedata/feature time series ({interval})/{symbol}_feature_time_series.csv"
         feature_time_series.to_csv(save_file_path, index=False)

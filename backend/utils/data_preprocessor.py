@@ -1,10 +1,9 @@
 import numpy as np
 import pandas as pd
-import yaml
 
 
 class DataPreprocessor:
-    def __init__(self, stock_time_series: pd.DataFrame):
+    def __init__(self, stock_time_series: pd.DataFrame, lookback_period: int, target_column: str, trend_length: int):
 
         """
         This class is used to preprocess stock data time series in order to use it in a LSTM Neural Network. Scaling hasnt been performed yet.
@@ -19,15 +18,13 @@ class DataPreprocessor:
         :param self.target_data_batched_target: A np.array of all the labels we try to predict.
         """
 
-        with open('../config.yaml', 'r') as config_file:
-            config = yaml.safe_load(config_file)
+        self.lookback_period: int = lookback_period
+        self.target_column: str = target_column
+        self.trend_length: int = trend_length
 
-        self.lookback_period: int = config["preprocess"]["lookback_period"]
-        self.target_column_name: str = config["preprocess"]["target_column_name"]
-        self.target_change_column_name: str = config["preprocess"]["target_change_column_name"]
-        self.target_trend_column_name: str = config["preprocess"]["target_trend_column_name"]
-        self.target_column: str = config["preprocess"]["target_column"]
-        self.trend_length: int = config["preprocess"]["trend_length"]
+        self.target_column_name: str = "target"
+        self.target_change_column_name: str = "target change"
+        self.target_trend_column_name: str = "target trend"
 
         self.stock_time_series: pd.DataFrame = stock_time_series
         self.trend_data: pd.DataFrame = self.get_trend_data(self.stock_time_series)
@@ -67,7 +64,7 @@ class DataPreprocessor:
 
     def get_lookback_batch(self, data: pd.DataFrame) -> [[[float]]]:
         time_series_batch: [[[float]]] = []
-        feature_df: pd.DataFrame = data.drop(["target"], axis=1)
+        feature_df: pd.DataFrame = data.drop([self.target_column_name], axis=1)
         for row in range(len(feature_df) - self.lookback_period):
             time_series_batch.append(feature_df.iloc[row + 1:row + self.lookback_period + 1].values)
 
@@ -76,6 +73,7 @@ class DataPreprocessor:
 
     def get_lookback_labels(self, data: pd.DataFrame) -> [float]:
         time_series_target = []
+        # use data[self.targgt_column]
         for row in range(len(data) - self.lookback_period):
             time_series_target.append(data[self.target_column_name].iloc[row + self.lookback_period])
 
