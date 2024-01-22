@@ -1,10 +1,9 @@
 import pandas as pd
-from backend.utils.feature_column_names import FeatureColumnNames
+import numpy as np
 
 
 class TrendProvider:
     def __init__(self, time_series: pd.DataFrame, rounding_factor: int):
-        self.column_names: FeatureColumnNames = FeatureColumnNames()
         self.time_series: pd.DataFrame = time_series
         self.rounding_factor: int = rounding_factor
 
@@ -30,7 +29,7 @@ class TrendProvider:
         :return: A pandas Series of rounded percentage change data.
         """
         percentage_change_column: pd.Series = self.time_series[column_name]
-        percentage_change: pd.Series = percentage_change_column.pct_change(periods=periods)
+        percentage_change: pd.Series = percentage_change_column.pct_change(periods=periods).replace([np.inf, -np.inf], 1.0000) * 100
         percentage_change_rounded: pd.Series = percentage_change.round(self.rounding_factor)
         return percentage_change_rounded
 

@@ -16,7 +16,6 @@ class ModelEvaluator:
                 self.roc_auc: float = 0
                 print("ROC AUC score is not defined when only one class is present.")
             else:
-                # Re-raise the exception if it's not the expected one
                 raise error
 
         self.evaluation_metrics: pd.DataFrame = self.get_evaluation_metrics()
