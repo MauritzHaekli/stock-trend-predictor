@@ -11,10 +11,10 @@ feature_engineering:
   time_series_interval: "1h"
 preprocess:
   trend_length: 1
-  target_column: "ema"
-  lookback_period: 9
+  target: "ema"
+  lookback_period: 3
 model:
-  epochs: 50
-  batch_size: 32
+  epochs: 75
+  batch_size: 256
 alpha_vantage:
   api_key: "HXDV0GQ1ICS8H8FV"
