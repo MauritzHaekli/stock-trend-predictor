@@ -74,9 +74,9 @@ class TechnicalIndicatorProvider:
         self.sma_long: SMAIndicator = SMAIndicator(close=self.time_series[self.column_names.close_price],
                                                    window=self.sma_long_period,
                                                    fillna=True)
-        self.sma_slope: float = (self.sma_short.sma_indicator().diff() / self.sma_short_period)
+        self.sma_slope: float = self.sma_short.sma_indicator().diff() / self.sma_short_period
 
-        self.technical_indicators: pd.DataFrame = self.get_technical_indicators().round(self.rounding_factor)
+        self.technical_indicators: pd.DataFrame = self.get_technical_indicators()
 
     def get_technical_indicators(self) -> pd.DataFrame:
         """
@@ -85,15 +85,16 @@ class TechnicalIndicatorProvider:
         :return: A time series of several technical indicators based on OHLC stock data
         """
         technical_indicators: pd.DataFrame = pd.DataFrame()
-        technical_indicators[self.column_names.adx]: pd.Series = self.adx.adx().round(self.rounding_factor)
-        technical_indicators[self.column_names.atr]: pd.Series = self.atr.average_true_range().round(self.rounding_factor)
-        technical_indicators[self.column_names.percent_b]: pd.Series = self.bb.bollinger_pband().round(self.rounding_factor)
-        technical_indicators[self.column_names.ema_price]: pd.Series = self.ema.ema_indicator().round(self.rounding_factor)
-        technical_indicators[self.column_names.ema_slope]: pd.Series = (self.ema.ema_indicator().diff()/self.ema_period).round(self.rounding_factor)
-        technical_indicators[self.column_names.macd]: pd.Series = self.macd.macd().round(self.rounding_factor)
-        technical_indicators[self.column_names.macd_signal]: pd.Series = self.macd.macd_signal().round(self.rounding_factor)
-        technical_indicators[self.column_names.macd_hist]: pd.Series = self.macd.macd_diff().round(self.rounding_factor)
-        technical_indicators[self.column_names.rsi]: pd.Series = self.rsi.rsi().round(self.rounding_factor)
-        technical_indicators[self.column_names.sma_price]: pd.Series = self.sma_short.sma_indicator().round(self.rounding_factor)
+        technical_indicators[self.column_names.adx]: pd.Series = self.adx.adx()
+        technical_indicators[self.column_names.atr]: pd.Series = self.atr.average_true_range()
+        technical_indicators[self.column_names.percent_b]: pd.Series = self.bb.bollinger_pband()
+        technical_indicators[self.column_names.ema_price]: pd.Series = self.ema.ema_indicator()
+        technical_indicators[self.column_names.ema_slope]: pd.Series = (self.ema.ema_indicator().diff()/self.ema_period)
+        technical_indicators[self.column_names.macd]: pd.Series = self.macd.macd()
+        technical_indicators[self.column_names.macd_signal]: pd.Series = self.macd.macd_signal()
+        technical_indicators[self.column_names.macd_hist]: pd.Series = self.macd.macd_diff()
+        technical_indicators[self.column_names.rsi]: pd.Series = self.rsi.rsi()
+        technical_indicators[self.column_names.sma_price]: pd.Series = self.sma_short.sma_indicator()
         technical_indicators[self.column_names.sma_slope]: pd.Series = self.sma_slope
-        return technical_indicators
+        rounded_technical_indicators: pd.DataFrame = technical_indicators.round(decimals=self.rounding_factor)
+        return rounded_technical_indicators
