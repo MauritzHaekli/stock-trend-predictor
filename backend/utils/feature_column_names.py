@@ -8,14 +8,10 @@ class FeatureColumnNames:
         self.close_price: str = "close"
 
         self.sma_price: str = "sma"
-        self.sma_absolute_change: str = "sma change"
-        self.sma_percent_change: str = "sma change (%)"
-        self.sma_trend: str = "sma trend"
+        self.sma_slope: str = "sma slope"
 
         self.ema_price: str = "ema"
-        self.ema_absolute_change: str = "ema change"
-        self.ema_percent_change: str = "ema change (%)"
-        self.ema_trend: str = "ema trend"
+        self.ema_slope: str = "ema slope"
 
         self.volume: str = "volume"
 
@@ -26,9 +22,6 @@ class FeatureColumnNames:
         self.macd_hist: str = "macd_hist"
         self.adx: str = "adx"
         self.rsi: str = "rsi"
-        self.fast_stochastic: str = "%K"
-        self.slow_stochastic: str = "%D"
-        self.vpt: str = "vpt"
 
         self.day: str = "day"
         self.hour: str = "hour"

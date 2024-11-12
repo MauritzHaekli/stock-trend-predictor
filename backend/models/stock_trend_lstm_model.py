@@ -24,7 +24,9 @@ class StockTrendLSTMModel:
         self.model = Sequential()
         self.model.add(LSTM(50, input_shape=self.input_shape, return_sequences=True))
         self.model.add(Dropout(0.2))
-        self.model.add(LSTM(30))
+        self.model.add(LSTM(50, return_sequences=True))
+        self.model.add(Dropout(0.2))
+        self.model.add(LSTM(50))
         self.model.add(Dropout(0.2))
         self.model.add(Dense(1, activation='sigmoid', kernel_regularizer=l2(0.001)))
 
@@ -33,7 +35,7 @@ class StockTrendLSTMModel:
         self.model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
 
     def train(self):
-        early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, min_delta=0.001, start_from_epoch=10)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, min_delta=0.001, start_from_epoch=10)
 
         input_shape_weights = (self.input_shape[0] + 1) * 50
         first_lstm_weights = (50 + 1) * 30

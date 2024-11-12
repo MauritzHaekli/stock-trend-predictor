@@ -1,20 +1,25 @@
 twelvedata:
   api_key: "82535d7d9eb84b5d905463e011aaaee8"
-  interval: "1h"
+  interval: "1min"
   order: "ASC"
-  symbol: "MO"
+  symbol: "NVDA"
   output: 5000
   decimal_places: 2
   time_series_key: "time_series"
 feature_engineering:
-  stock_symbols: [ "AAPL", "ABBV", "AMD", "AMZN", "AZN", "BA", "BABA", "BAC", "BMY", "BP", "CSCO", "CVS", "DIS", "ENB", "GILD", "GOOG", "INFY", "INTC", "JPM", "KO", "META", "MO", "MRK", "MSFT", "MU", "NEE", "NKE", "NVDA", "ORCL", "OTIS", "PANW", "PFE", "PG", "RTX", "SHEL", "SHOP", "SMCI", "T", "TSLA", "TSM", "UBER", "VZ", "WFC", "WMT", "XOM" ]
-  time_series_interval: "1h"
+  time_series_interval: "1min"
+  stock_symbols: [ "AAPL", "ABBV", "NVDA"] # "AMD", "AMZN", "AZN", "BA", "BABA", "BAC", "BMY",
+                  # "BP", "CSCO", "CVS", "DIS", "ENB", "GILD", "GOOG", "INFY",
+                   # "INTC", "JPM", "KO", "META", "MO", "MRK", "MSFT",
+                   # "MU", "NEE", "NKE", "NVDA", "ORCL", "OTIS", "PANW",
+                   # "PFE", "PG", "RTX", "SHEL", "SHOP", "SMCI", "T", "TSLA",
+                   # "TSM", "UBER", "VZ", "WFC", "WMT", "XOM" ]
 preprocess:
   trend_length: 1
-  target: "ema"
+  target: "sma"
   lookback_period: 3
 model:
-  epochs: 75
-  batch_size: 256
+  epochs: 100
+  batch_size: 32
 alpha_vantage:
   api_key: "HXDV0GQ1ICS8H8FV"
