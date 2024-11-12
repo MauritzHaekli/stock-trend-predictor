@@ -19,7 +19,7 @@ class FeatureProvider:
         :param self.feature_time_series: A dataframe containing OHLC stock data and all features calculated in self.get_feature_time_series()
         """
         self.column_names: FeatureColumnNames = FeatureColumnNames()
-        self.technical_indicator_provider: TechnicalIndicatorProvider = TechnicalIndicatorProvider(time_series, rounding_factor)
+        self.technical_indicator_provider: TechnicalIndicatorProvider = TechnicalIndicatorProvider(time_series)
 
         if not isinstance(time_series, pd.DataFrame):
             raise ValueError("The 'time_series' parameter must be a pandas DataFrame.")

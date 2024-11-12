@@ -23,3 +23,18 @@ model:
   batch_size: 32
 alpha_vantage:
   api_key: "HXDV0GQ1ICS8H8FV"
+technical_indicator_parameters:
+  adx_period: 14
+  atr_window: 14
+  bollinger_period: 20
+  bollinger_std: 2
+  ema_period: 9
+  macd_short_period: 12
+  macd_long_period: 26
+  macd_signal_period: 9
+  rsi_period: 14
+  sma_short_period: 9
+  sma_middle_period: 12
+  sma_long_period: 20
+calculation_parameters:
+  rounding_factor: 4
