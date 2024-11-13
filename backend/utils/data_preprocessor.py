@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
-from backend.utils.feature_calculator import FeatureCalculator
+from backend.utils.feature_change_calculator import FeatureChangeCalculator
 
 
 class DataPreprocessor:
     def __init__(self, time_series: pd.DataFrame, lookback_period: int, target: str, trend_length: int):
 
         """
-        This class is used to preprocess time series data in order to use it in a LSTM Neural Network. Scaling has not been performed yet
+        This class is used to preprocess feature time series data in order to use it in a LSTM Neural Network. Scaling has not been performed yet
         :param time_series: Raw stock data containing a time series with OHLC time series data and derived features like technical indicators and price trends
         :param self.lookback_period: A period we provide for the LSTM to look back upon for each time point to make a prediction.
         :param self.target_column: The column we want to make a prediction for
@@ -32,7 +32,7 @@ class DataPreprocessor:
     def get_target_data(self, time_series: pd.DataFrame) -> pd.DataFrame:
         target_data: pd.DataFrame = time_series.copy()
         target_rounding_factor: int = 4
-        target_feature_calculator: FeatureCalculator = FeatureCalculator(feature=target_data[self.target], periods=self.trend_length, rounding_factor=target_rounding_factor)
+        target_feature_calculator: FeatureChangeCalculator = FeatureChangeCalculator(feature=target_data[self.target], periods=self.trend_length, rounding_factor=target_rounding_factor)
         target_data[self.target_trend_column]: pd.Series = target_feature_calculator.get_trend_change(periods=self.trend_length)
         target_data[self.label_column]: pd.Series = target_data[self.target_trend_column].shift(-self.trend_length, fill_value=0)
 

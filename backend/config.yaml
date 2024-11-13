@@ -36,4 +36,4 @@ preprocess:
   lookback_period: 3
 model:
   epochs: 100
-  batch_size: 32
+  batch_size: 4

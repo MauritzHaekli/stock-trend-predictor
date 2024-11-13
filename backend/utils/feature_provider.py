@@ -1,6 +1,6 @@
 import pandas as pd
 from backend.utils.feature_column_names import FeatureColumnNames
-from backend.utils.feature_calculator import FeatureCalculator
+from backend.utils.feature_change_calculator import FeatureChangeCalculator
 from backend.utils.technical_indicator_provider import TechnicalIndicatorProvider
 from backend.utils.datetime_provider import DatetimeProvider
 
@@ -61,17 +61,17 @@ class FeatureProvider:
         adx: pd.Series = technical_indicators[self.column_names.adx]
 
         datetime_provider: DatetimeProvider = DatetimeProvider(time_series)
-        open_feature_provider: FeatureCalculator = FeatureCalculator(open_price, self.periods, self.rounding_factor)
-        high_feature_provider: FeatureCalculator = FeatureCalculator(high_price, self.periods, self.rounding_factor)
-        low_feature_provider: FeatureCalculator = FeatureCalculator(low_price, self.periods, self.rounding_factor)
-        close_feature_provider: FeatureCalculator = FeatureCalculator(close_price, self.periods, self.rounding_factor)
-        volume_feature_provider: FeatureCalculator = FeatureCalculator(volume, self.periods, self.rounding_factor)
-        sma_feature_provider: FeatureCalculator = FeatureCalculator(sma_price, self.periods, self.rounding_factor)
-        sma_slope_feature_provider: FeatureCalculator = FeatureCalculator(sma_slope, self.periods, self.rounding_factor)
-        ema_feature_provider: FeatureCalculator = FeatureCalculator(ema_price, self.periods, self.rounding_factor)
-        ema_slope_feature_provider: FeatureCalculator = FeatureCalculator(ema_slope, self.periods, self.rounding_factor)
-        percent_b_feature_provider: FeatureCalculator = FeatureCalculator(percent_b, self.periods, self.rounding_factor)
-        rsi_feature_provider: FeatureCalculator = FeatureCalculator(rsi, self.periods, self.rounding_factor)
+        open_feature_provider: FeatureChangeCalculator = FeatureChangeCalculator(open_price, self.periods, self.rounding_factor)
+        high_feature_provider: FeatureChangeCalculator = FeatureChangeCalculator(high_price, self.periods, self.rounding_factor)
+        low_feature_provider: FeatureChangeCalculator = FeatureChangeCalculator(low_price, self.periods, self.rounding_factor)
+        close_feature_provider: FeatureChangeCalculator = FeatureChangeCalculator(close_price, self.periods, self.rounding_factor)
+        volume_feature_provider: FeatureChangeCalculator = FeatureChangeCalculator(volume, self.periods, self.rounding_factor)
+        sma_feature_provider: FeatureChangeCalculator = FeatureChangeCalculator(sma_price, self.periods, self.rounding_factor)
+        sma_slope_feature_provider: FeatureChangeCalculator = FeatureChangeCalculator(sma_slope, self.periods, self.rounding_factor)
+        ema_feature_provider: FeatureChangeCalculator = FeatureChangeCalculator(ema_price, self.periods, self.rounding_factor)
+        ema_slope_feature_provider: FeatureChangeCalculator = FeatureChangeCalculator(ema_slope, self.periods, self.rounding_factor)
+        percent_b_feature_provider: FeatureChangeCalculator = FeatureChangeCalculator(percent_b, self.periods, self.rounding_factor)
+        rsi_feature_provider: FeatureChangeCalculator = FeatureChangeCalculator(rsi, self.periods, self.rounding_factor)
 
         open_latest_absolute_change: pd.Series = open_feature_provider.latest_absolute_change
         open_recent_absolute_change: pd.Series = open_feature_provider.recent_absolute_change
