@@ -1,11 +1,27 @@
-twelvedata:
+time_series_provider_parameters:
   api_key: "82535d7d9eb84b5d905463e011aaaee8"
   interval: "1min"
   order: "ASC"
-  symbol: "NVDA"
+  symbol: "AAPL"
   output: 5000
   decimal_places: 2
   time_series_key: "time_series"
+technical_indicator_parameters:
+  adx_period: 14
+  atr_window: 14
+  bollinger_period: 20
+  bollinger_std: 2
+  ema_period: 9
+  macd_short_period: 12
+  macd_long_period: 26
+  macd_signal_period: 9
+  rsi_period: 14
+  sma_short_period: 9
+  sma_middle_period: 12
+  sma_long_period: 20
+calculation_parameters:
+  rounding_factor: 2
+  rounding_factor_small: 4
 feature_engineering:
   time_series_interval: "1min"
   stock_symbols: [ "AAPL", "ABBV", "NVDA"] # "AMD", "AMZN", "AZN", "BA", "BABA", "BAC", "BMY",
@@ -21,20 +37,3 @@ preprocess:
 model:
   epochs: 100
   batch_size: 32
-alpha_vantage:
-  api_key: "HXDV0GQ1ICS8H8FV"
-technical_indicator_parameters:
-  adx_period: 14
-  atr_window: 14
-  bollinger_period: 20
-  bollinger_std: 2
-  ema_period: 9
-  macd_short_period: 12
-  macd_long_period: 26
-  macd_signal_period: 9
-  rsi_period: 14
-  sma_short_period: 9
-  sma_middle_period: 12
-  sma_long_period: 20
-calculation_parameters:
-  rounding_factor: 4

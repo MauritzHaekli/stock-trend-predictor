@@ -27,7 +27,7 @@ class TechnicalIndicatorProvider:
         self.bollinger_std: int = technical_indicators_parameters['bollinger_std']
         self.ema_period: int = technical_indicators_parameters['ema_period']
         self.macd_short_period: int = technical_indicators_parameters['macd_short_period']
-        self.macd_long_period: int = technical_indicators_parameters['macd_long_period_period']
+        self.macd_long_period: int = technical_indicators_parameters['macd_long_period']
         self.macd_signal_period: int = technical_indicators_parameters['macd_signal_period']
         self.rsi_period: int = technical_indicators_parameters['rsi_period']
         self.sma_short_period: int = technical_indicators_parameters['sma_short_period']
