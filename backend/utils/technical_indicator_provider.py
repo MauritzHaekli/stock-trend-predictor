@@ -13,9 +13,14 @@ class TechnicalIndicatorProvider:
 
         :param time_series: A time series of OHLC stock data
         """
-        with open('../config.yaml', "r") as file:
-            config = yaml.safe_load(file)
-            technical_indicators_parameters = config["technical_indicator_parameters"]
+        try:
+            with open('../config.yaml', "r") as file:
+                config = yaml.safe_load(file)
+                technical_indicators_parameters = config["technical_indicator_parameters"]
+        except FileNotFoundError:
+            raise FileNotFoundError("The config.yaml file was not found.")
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error reading YAML file: {e}")
 
         self.column_names: FeatureColumnNames = FeatureColumnNames()
         self.rounding_factor: int = config["calculation_parameters"].get('rounding_factor')
@@ -34,44 +39,44 @@ class TechnicalIndicatorProvider:
         self.sma_middle_period: int = technical_indicators_parameters['sma_middle_period']
         self.sma_long_period: int = technical_indicators_parameters['sma_long_period']
 
-        self.adx: ADXIndicator = ADXIndicator(high=self.time_series[self.column_names.high_price],
-                                              low=self.time_series[self.column_names.low_price],
-                                              close=self.time_series[self.column_names.close_price],
+        self.adx: ADXIndicator = ADXIndicator(high=self.time_series[self.column_names.HIGH_PRICE],
+                                              low=self.time_series[self.column_names.LOW_PRICE],
+                                              close=self.time_series[self.column_names.CLOSE_PRICE],
                                               window=self.adx_period,
                                               fillna=True)
-        self.atr: AverageTrueRange = AverageTrueRange(high=self.time_series[self.column_names.high_price],
-                                                      low=self.time_series[self.column_names.low_price],
-                                                      close=self.time_series[self.column_names.close_price],
+        self.atr: AverageTrueRange = AverageTrueRange(high=self.time_series[self.column_names.HIGH_PRICE],
+                                                      low=self.time_series[self.column_names.LOW_PRICE],
+                                                      close=self.time_series[self.column_names.CLOSE_PRICE],
                                                       window=self.atr_window,
                                                       fillna=True)
 
-        self.bb: BollingerBands = BollingerBands(close=self.time_series[self.column_names.close_price],
+        self.bb: BollingerBands = BollingerBands(close=self.time_series[self.column_names.CLOSE_PRICE],
                                                  window=self.bollinger_period,
                                                  window_dev=self.bollinger_std,
                                                  fillna=True)
 
-        self.ema: EMAIndicator = EMAIndicator(close=self.time_series[self.column_names.close_price],
+        self.ema: EMAIndicator = EMAIndicator(close=self.time_series[self.column_names.CLOSE_PRICE],
                                               window=self.ema_period,
                                               fillna=True)
 
-        self.macd: MACD = MACD(close=self.time_series[self.column_names.close_price],
+        self.macd: MACD = MACD(close=self.time_series[self.column_names.CLOSE_PRICE],
                                window_fast=self.macd_short_period,
                                window_slow=self.macd_long_period,
                                window_sign=self.macd_signal_period,
                                fillna=True)
 
-        self.rsi: RSIIndicator = RSIIndicator(self.time_series[self.column_names.close_price],
+        self.rsi: RSIIndicator = RSIIndicator(self.time_series[self.column_names.CLOSE_PRICE],
                                               window=self.rsi_period,
                                               fillna=True)
 
-        self.sma_short: SMAIndicator = SMAIndicator(close=self.time_series[self.column_names.close_price],
+        self.sma_short: SMAIndicator = SMAIndicator(close=self.time_series[self.column_names.CLOSE_PRICE],
                                                     window=self.sma_short_period,
                                                     fillna=True)
 
-        self.sma_middle: SMAIndicator = SMAIndicator(close=self.time_series[self.column_names.close_price],
+        self.sma_middle: SMAIndicator = SMAIndicator(close=self.time_series[self.column_names.CLOSE_PRICE],
                                                      window=self.sma_middle_period,
                                                      fillna=True)
-        self.sma_long: SMAIndicator = SMAIndicator(close=self.time_series[self.column_names.close_price],
+        self.sma_long: SMAIndicator = SMAIndicator(close=self.time_series[self.column_names.CLOSE_PRICE],
                                                    window=self.sma_long_period,
                                                    fillna=True)
         self.sma_slope: float = self.sma_short.sma_indicator().diff() / self.sma_short_period
@@ -85,16 +90,16 @@ class TechnicalIndicatorProvider:
         :return: A time series of several technical indicators based on OHLC stock data
         """
         technical_indicators: pd.DataFrame = pd.DataFrame()
-        technical_indicators[self.column_names.adx]: pd.Series = self.adx.adx()
-        technical_indicators[self.column_names.atr]: pd.Series = self.atr.average_true_range()
-        technical_indicators[self.column_names.percent_b]: pd.Series = self.bb.bollinger_pband()
-        technical_indicators[self.column_names.ema_price]: pd.Series = self.ema.ema_indicator()
-        technical_indicators[self.column_names.ema_slope]: pd.Series = (self.ema.ema_indicator().diff()/self.ema_period)
-        technical_indicators[self.column_names.macd]: pd.Series = self.macd.macd()
-        technical_indicators[self.column_names.macd_signal]: pd.Series = self.macd.macd_signal()
-        technical_indicators[self.column_names.macd_hist]: pd.Series = self.macd.macd_diff()
-        technical_indicators[self.column_names.rsi]: pd.Series = self.rsi.rsi()
-        technical_indicators[self.column_names.sma_price]: pd.Series = self.sma_short.sma_indicator()
-        technical_indicators[self.column_names.sma_slope]: pd.Series = self.sma_slope
+        technical_indicators[self.column_names.ADX]: pd.Series = self.adx.adx()
+        technical_indicators[self.column_names.ATR]: pd.Series = self.atr.average_true_range()
+        technical_indicators[self.column_names.PERCENT_B]: pd.Series = self.bb.bollinger_pband()
+        technical_indicators[self.column_names.EMA]: pd.Series = self.ema.ema_indicator()
+        technical_indicators[self.column_names.EMA_SLOPE]: pd.Series = (self.ema.ema_indicator().diff()/self.ema_period)
+        technical_indicators[self.column_names.MACD]: pd.Series = self.macd.macd()
+        technical_indicators[self.column_names.MACD_SIGNAL]: pd.Series = self.macd.macd_signal()
+        technical_indicators[self.column_names.MACD_HIST]: pd.Series = self.macd.macd_diff()
+        technical_indicators[self.column_names.RSI]: pd.Series = self.rsi.rsi()
+        technical_indicators[self.column_names.SMA]: pd.Series = self.sma_short.sma_indicator()
+        technical_indicators[self.column_names.SMA_SLOPE]: pd.Series = self.sma_slope
         rounded_technical_indicators: pd.DataFrame = technical_indicators.round(decimals=self.rounding_factor)
         return rounded_technical_indicators

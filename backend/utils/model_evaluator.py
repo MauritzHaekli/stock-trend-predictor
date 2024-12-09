@@ -20,7 +20,7 @@ class ModelEvaluator:
 
         self.evaluation_metrics: pd.DataFrame = self.get_evaluation_metrics()
 
-    def get_evaluation_metrics(self):
+    def get_evaluation_metrics(self) -> pd.DataFrame:
         metrics_data = {
             'Metric': ['Loss', 'Accuracy', 'Precision', 'Recall', 'F1Score', 'ROC AUC'],
             'Score': [self.test_loss, self.accuracy, self.precision, self.recall, self.f1, self.roc_auc]

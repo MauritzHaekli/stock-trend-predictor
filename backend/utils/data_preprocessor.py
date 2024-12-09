@@ -32,7 +32,7 @@ class DataPreprocessor:
     def get_target_data(self, time_series: pd.DataFrame) -> pd.DataFrame:
         target_data: pd.DataFrame = time_series.copy()
         target_rounding_factor: int = 4
-        target_feature_calculator: FeatureChangeCalculator = FeatureChangeCalculator(feature=target_data[self.target], periods=self.trend_length, rounding_factor=target_rounding_factor)
+        target_feature_calculator: FeatureChangeCalculator = FeatureChangeCalculator(feature=target_data[self.target], rounding_factor=target_rounding_factor)
         target_data[self.target_trend_column]: pd.Series = target_feature_calculator.get_trend_change(periods=self.trend_length)
         target_data[self.label_column]: pd.Series = target_data[self.target_trend_column].shift(-self.trend_length, fill_value=0)
 

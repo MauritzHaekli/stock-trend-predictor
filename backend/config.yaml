@@ -2,7 +2,7 @@ time_series_provider_parameters:
   api_key: "82535d7d9eb84b5d905463e011aaaee8"
   interval: "1min"
   order: "ASC"
-  symbol: "NVDA"
+  symbol: "APPL"
   output: 5000
   decimal_places: 2
   time_series_key: "time_series"
@@ -23,8 +23,8 @@ calculation_parameters:
   rounding_factor: 2
   rounding_factor_small: 4
 feature_engineering:
-  time_series_interval: "1min"
-  stock_symbols: [ "AAPL", "ABBV", "NVDA"] # "AMD", "AMZN", "AZN", "BA", "BABA", "BAC", "BMY",
+  time_series_interval: "1h"
+  stock_symbols: ["AAPL", "ABBV", "NVDA"]#, "ABBV", "NVDA"# "AMD", "AMZN", "AZN", "BA", "BABA", "BAC", "BMY",
                   # "BP", "CSCO", "CVS", "DIS", "ENB", "GILD", "GOOG", "INFY",
                    # "INTC", "JPM", "KO", "META", "MO", "MRK", "MSFT",
                    # "MU", "NEE", "NKE", "NVDA", "ORCL", "OTIS", "PANW",
@@ -32,8 +32,8 @@ feature_engineering:
                    # "TSM", "UBER", "VZ", "WFC", "WMT", "XOM" ]
 preprocess:
   trend_length: 1
-  target: "sma"
-  lookback_period: 3
+  target: "ema"
+  lookback_period: 9
 model:
   epochs: 100
-  batch_size: 4
+  batch_size: 8
