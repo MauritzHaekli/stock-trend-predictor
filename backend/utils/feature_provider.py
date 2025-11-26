@@ -57,27 +57,18 @@ class FeatureProvider:
         for feature_name, feature_series in ohlc_features.items():
             feature_data[feature_name] = feature_series
 
-        tech_indicators: [str] = [self.column_names.ADX,
-                                  self.column_names.ATR,
-                                  self.column_names.SMA,
-                                  self.column_names.EMA,
-                                  self.column_names.RSI,
-                                  self.column_names.MACD_SIGNAL,
-                                  self.column_names.PERCENT_B]
+        tech_indicators: list[str] = [self.column_names.ADX,
+                                      self.column_names.ATR,
+                                      self.column_names.SMA,
+                                      self.column_names.EMA,
+                                      self.column_names.RSI,
+                                      self.column_names.MACD_SIGNAL,
+                                      self.column_names.PERCENT_B]
 
         for indicator in tech_indicators:
-            feature_data[indicator] = self.technical_indicators[indicator]
+            feature_data[indicator] = self.technical_indicators[indicator].shift(1)
 
-        selected_columns = [
-            self.column_names.OPEN_PRICE,
-            self.column_names.HIGH_PRICE,
-            self.column_names.LOW_PRICE,
-            self.column_names.CLOSE_PRICE,
-            self.column_names.SMA,
-            self.column_names.EMA,
-            self.column_names.RSI,
-            self.column_names.ATR,
-                         ]
+        selected_columns = []
 
         for feature_series in selected_columns:
             feature_data = self.add_feature_change_columns(feature_data, feature_data[feature_series], self.periods)

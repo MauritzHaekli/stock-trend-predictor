@@ -33,7 +33,7 @@ feature_engineering:
 preprocess:
   trend_length: 1
   target: "ema"
-  lookback_period: 9
+  lookback_period: 30
 model:
   epochs: 100
-  batch_size: 8
+  batch_size: 32

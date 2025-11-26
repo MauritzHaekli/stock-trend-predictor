@@ -1,67 +1,118 @@
 import numpy as np
 import pandas as pd
+import joblib
+from sklearn.preprocessing import MinMaxScaler
 from backend.utils.feature_change_calculator import FeatureChangeCalculator
 
 
 class DataPreprocessor:
-    def __init__(self, time_series: pd.DataFrame, lookback_period: int, target: str, trend_length: int):
+    def __init__(
+        self,
+        time_series: pd.DataFrame,
+        lookback_period: int,
+        target_feature: str,
+        trend_length: int,
+        scaler_path: str = "scaler.save",
+        fit_scaler: bool = True
+    ):
+        self.lookback_period = lookback_period
+        self.target = target_feature
+        self.trend_length = trend_length
+        self.label_column = "label"
+        self.target_trend_column = "target trend"
+        self.scaler_path = scaler_path
+        self.fit_scaler = fit_scaler
 
-        """
-        This class is used to preprocess feature time series data in order to use it in a LSTM Neural Network. Scaling has not been performed yet
-        :param time_series: Raw stock data containing a time series with OHLC time series data and derived features like technical indicators and price trends
-        :param self.lookback_period: A period we provide for the LSTM to look back upon for each time point to make a prediction.
-        :param self.target_column: The column we want to make a prediction for
-        :param self.trend_length: The period we try to predict into the future. Trend length of 10 means, we try to make a prediction for what happens in 10 time series steps
-        :param self.trend_data: A pandas DataFrame containing price information, technical indicators and calculated trends in self.trend_columns
-        :param self.target_data: In addition to trend_data, this pandas DataFrame contains a target column with the label we try to predict. Target data has been shifted "upwards" according to self.trend_length
-        :param self.target_data_batched_target: A numpy array of all the labels we try to predict.
-        """
-        self.lookback_period: int = lookback_period
-        self.target: str = target
-        self.trend_length: int = trend_length
+        self.time_series = time_series
+        self.target_data = self.get_target_data(self.time_series)
 
-        self.label_column: str = "label"
-        self.target_trend_column: str = "target trend"
+        self.feature_data = self.get_feature_data(self.target_data)
+        self.label_data = self.get_lookback_labels(self.target_data)
 
-        self.time_series: pd.DataFrame = time_series
-        self.target_data: pd.DataFrame = self.get_target_data(self.time_series)
-        self.feature_data: pd.DataFrame = self.get_feature_data(self.target_data)
-        self.feature_data_batched: [[[float]]] = self.get_feature_data_batches(self.feature_data)
-        self.label_data: [float] = self.get_lookback_labels(self.target_data)
+        if self.fit_scaler:
+            self.feature_data_scaled = self.fit_scaler_and_transform(self.feature_data)
+        else:
+            self.feature_data_scaled = self.load_scaler_and_transform(self.feature_data)
+
+        self.feature_data_batched = self.get_feature_data_batches(self.feature_data_scaled)
+
+        self.feature_data_batched = self.feature_data_batched[:-self.trend_length]
+        self.label_data = self.label_data[:-self.trend_length]
 
     def get_target_data(self, time_series: pd.DataFrame) -> pd.DataFrame:
-        target_data: pd.DataFrame = time_series.copy()
-        target_rounding_factor: int = 4
-        target_feature_calculator: FeatureChangeCalculator = FeatureChangeCalculator(feature=target_data[self.target], rounding_factor=target_rounding_factor)
-        target_data[self.target_trend_column]: pd.Series = target_feature_calculator.get_trend_change(periods=self.trend_length)
-        target_data[self.label_column]: pd.Series = target_data[self.target_trend_column].shift(-self.trend_length, fill_value=0)
+        datetime_col = "datetime"
 
-        target_data.index = pd.to_datetime(target_data['datetime'], format='%Y-%m-%d %H:%M:%S')
-        columns_to_drop: [str] = ["datetime"]
-        target_data.drop(columns=columns_to_drop, axis=1, inplace=True)
-        target_data = target_data.iloc[self.trend_length:]
+        if datetime_col not in time_series.columns:
+            raise ValueError(f"Expected '{datetime_col}' column in input data.")
+        if self.target not in time_series.columns:
+            raise ValueError(f"Expected target column '{self.target}' in input data.")
+
+        target_data = time_series.copy()
+
+        target_data[self.target_trend_column] = self.get_current_trend(target_data[self.target])
+        target_data[self.label_column] = self.get_future_trend(target_data[self.target], periods=self.trend_length)
+
+        try:
+            target_data.index = pd.to_datetime(target_data[datetime_col], format="%Y-%m-%d %H:%M:%S")
+        except Exception as e:
+            raise ValueError(f"Failed to convert '{datetime_col}' to datetime: {e}")
+
+        target_data.drop(columns=[datetime_col], inplace=True, errors='ignore')
+        target_data = target_data.iloc[:-self.trend_length]
+
         return target_data
 
+    def get_current_trend(self, feature: pd.Series) -> pd.Series:
+        """
+        Current trend: 1 if current value >= previous value, else 0.
+        """
+        trend = (feature >= feature.shift(1)).astype(int)
+        trend.name = self.target_trend_column
+        return trend
+
+    def get_future_trend(self, feature: pd.Series, periods: int) -> pd.Series:
+        """
+        Future trend: 1 if future value >= current value, else 0.
+        """
+        trend = (feature.shift(-periods) >= feature).astype(int)
+        trend.name = self.label_column
+        return trend
+
+
     def get_feature_data(self, target_data: pd.DataFrame) -> pd.DataFrame:
-        columns_to_drop: [str] = [self.label_column]
-        feature_data: pd.DataFrame = target_data.drop(columns=columns_to_drop, axis=1)
-        return feature_data
+        if self.label_column not in target_data.columns:
+            raise ValueError(f"Label column '{self.label_column}' not found in the input data.")
+        return target_data.drop(columns=[self.label_column, self.target_trend_column])
 
-    def get_feature_data_batches(self, data: pd.DataFrame) -> [[[float]]]:
-        time_series_batch: [[[float]]] = []
-        feature_df: pd.DataFrame = data
-        for row in range(len(feature_df) - self.lookback_period):
-            time_series_batch.append(feature_df.iloc[row + 1:row + self.lookback_period + 1].values)
+    def get_lookback_labels(self, data: pd.DataFrame) -> np.ndarray:
+        if len(data) <= self.lookback_period:
+            raise ValueError("Input data must have more rows than the lookback period.")
+        if self.label_column not in data.columns:
+            raise ValueError(f"Label column '{self.label_column}' not found in input data.")
+        labels = data[self.label_column].values
+        return labels[self.lookback_period:]
 
-        time_series_batch = np.array(time_series_batch)
-        return time_series_batch
+    def fit_scaler_and_transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        scaled_values = scaler.fit_transform(df.values)
+        joblib.dump(scaler, self.scaler_path)
+        return pd.DataFrame(scaled_values, columns=df.columns, index=df.index)
 
-    def get_lookback_labels(self, data: pd.DataFrame) -> [float]:
-        time_series_target = []
-        for row in range(len(data) - self.lookback_period):
-            label: float = data[self.label_column].iloc[row + self.lookback_period]
-            time_series_target.append(label)
+    def load_scaler_and_transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        scaler = joblib.load(self.scaler_path)
+        scaled_values = scaler.transform(df.values)
+        return pd.DataFrame(scaled_values, columns=df.columns, index=df.index)
 
-        time_series_target: [float] = np.array(time_series_target)
-        return time_series_target
+    def get_feature_data_batches(self, data: pd.DataFrame) -> np.ndarray:
+        if len(data) <= self.lookback_period:
+            raise ValueError("Input data must have more rows than the lookback period.")
 
+        values = data.values
+        num_batches = len(data) - self.lookback_period
+        n_features = values.shape[1]
+
+        batches = np.empty((num_batches, self.lookback_period, n_features), dtype=values.dtype)
+        for i in range(num_batches):
+            batches[i] = values[i : i + self.lookback_period]
+
+        return batches
