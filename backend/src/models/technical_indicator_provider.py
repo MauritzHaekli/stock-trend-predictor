@@ -3,7 +3,7 @@ import yaml
 from ta.momentum import RSIIndicator
 from ta.volatility import BollingerBands, AverageTrueRange
 from ta.trend import ADXIndicator, EMAIndicator, MACD, SMAIndicator
-from backend.utils.feature_column_names import FeatureColumnNames
+from backend.src.models.feature_column_names import FeatureColumnNames
 
 
 class TechnicalIndicatorProvider:
@@ -14,7 +14,7 @@ class TechnicalIndicatorProvider:
         :param time_series: A time series of OHLC stock data
         """
         try:
-            with open('../config.yaml', "r") as file:
+            with open('../../config.yaml', "r") as file:
                 config = yaml.safe_load(file)
                 technical_indicators_parameters = config["technical_indicator_parameters"]
         except FileNotFoundError:

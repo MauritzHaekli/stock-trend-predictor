@@ -34,7 +34,7 @@ class DataPreprocessorValidator(unittest.TestCase):
         expected_result.index.name = 'datetime'
         expected_result.index.freq = None
 
-        result = data_preprocessor.get_target_data(test_data)
+        result = data_preprocessor.get_labeled_feature_data(test_data)
         self.assertEqual(result.shape, expected_result.shape)
         self.assertListEqual(result.columns.tolist(), expected_result.columns.tolist())
         pd.testing.assert_frame_equal(result, expected_result, check_dtype=False)

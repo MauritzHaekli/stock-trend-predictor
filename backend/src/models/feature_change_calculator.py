@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from backend.utils.validator_service import BaseValidator, PeriodValidator
 
 
 class FeatureChangeCalculator:
@@ -26,9 +25,6 @@ class FeatureChangeCalculator:
         self.feature: pd.Series = feature
         self.feature_name = self.feature.name
         self.rounding_factor: int = rounding_factor
-        self.base_validator = BaseValidator
-        self.period_validator = PeriodValidator
-        self.base_validator.validate_series(self.feature)
 
     def get_absolute_change(self, periods: int) -> pd.Series:
         """
@@ -51,7 +47,6 @@ class FeatureChangeCalculator:
         :param inf_replacement: Value to replace infinities with. Default is NaN.
         :return: A pandas Series containing the rounded percentage change values.
         """
-        self.period_validator.validate_periods(periods, self.feature)
 
         percentage_change_name: str = f"{self.feature_name}({periods}) change(%)"
         percentage_change: pd.Series = self.feature.pct_change(periods=periods) * 100
@@ -70,7 +65,6 @@ class FeatureChangeCalculator:
         :param periods: The period over which to determine the trend.
         :return: A pandas Series containing the trend indicators (1 for positive trend, 0 otherwise).
         """
-        self.period_validator.validate_periods(periods, self.feature)
 
         recent_trend_name: str = f"{self.feature_name}({periods}) trend"
         trend_change: pd.Series = pd.Series(

@@ -35,7 +35,7 @@ class TimeSeriesProvider:
         response_values_key (str): Key to access the data values in the API response.
     """
     def __init__(self):
-        with open('../config.yaml', 'r') as config_file:
+        with open('../../config.yaml', 'r') as config_file:
             config = yaml.safe_load(config_file)
             time_series_provider_parameters = config['time_series_provider_parameters']
 
@@ -90,7 +90,7 @@ class TimeSeriesProvider:
         """
         time_series_df = self.get_time_series()
         if not time_series_df.empty:
-            save_file_path = f"../data/twelvedata/time series ({self.interval})/{self.symbol}_time_series.csv"
+            save_file_path = f"../main/data/twelvedata/time series ({self.interval})/{self.symbol}_time_series.csv"
             save_to_csv(time_series_df, save_file_path)
 
 

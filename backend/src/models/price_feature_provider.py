@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from backend.utils.feature_column_names import FeatureColumnNames
+from backend.src.models.feature_column_names import FeatureColumnNames
 
 
 class PriceFeatureProvider:

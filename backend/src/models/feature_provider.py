@@ -1,9 +1,8 @@
 import pandas as pd
-from backend.utils.feature_column_names import FeatureColumnNames
-from backend.utils.feature_change_calculator import FeatureChangeCalculator
-from backend.utils.technical_indicator_provider import TechnicalIndicatorProvider
-from backend.utils.datetime_provider import DatetimeProvider
-from backend.utils.validator_service import FeatureValidator
+from backend.src.models.feature_column_names import FeatureColumnNames
+from backend.src.models.feature_change_calculator import FeatureChangeCalculator
+from backend.src.models.technical_indicator_provider import TechnicalIndicatorProvider
+from backend.src.models.datetime_provider import DatetimeProvider
 
 
 class FeatureProvider:
@@ -26,13 +25,10 @@ class FeatureProvider:
 
         self.column_names: FeatureColumnNames = FeatureColumnNames()
         self.technical_indicator_provider: TechnicalIndicatorProvider = TechnicalIndicatorProvider(time_series)
-        self.feature_Validator: FeatureValidator = FeatureValidator()
         self.time_series: pd.DataFrame = time_series
         self.periods: int = periods
         self.rounding_factor: int = rounding_factor
         self.cutoff: int = cutoff
-
-        self.feature_Validator.validate_feature_provider_input(time_series, periods, rounding_factor, cutoff)
 
         self.technical_indicators: pd.DataFrame = self.technical_indicator_provider.technical_indicators
         self.feature_time_series: pd.DataFrame = self.build_feature_time_series()

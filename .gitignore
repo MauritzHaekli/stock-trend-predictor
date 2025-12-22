@@ -1,7 +1,5 @@
 .idea
 .ipynb_checkpoints
+.venv
 __pycache__/
 backend/tests/__pycache__/
-backend/venv
-/backend/venv/
-/frontend/node_modules

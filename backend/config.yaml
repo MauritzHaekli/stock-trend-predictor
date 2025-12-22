@@ -24,16 +24,11 @@ calculation_parameters:
   rounding_factor_small: 4
 feature_engineering:
   time_series_interval: "1h"
-  stock_symbols: ["AAPL", "ABBV", "NVDA"]#, "ABBV", "NVDA"# "AMD", "AMZN", "AZN", "BA", "BABA", "BAC", "BMY",
-                  # "BP", "CSCO", "CVS", "DIS", "ENB", "GILD", "GOOG", "INFY",
-                   # "INTC", "JPM", "KO", "META", "MO", "MRK", "MSFT",
-                   # "MU", "NEE", "NKE", "NVDA", "ORCL", "OTIS", "PANW",
-                   # "PFE", "PG", "RTX", "SHEL", "SHOP", "SMCI", "T", "TSLA",
-                   # "TSM", "UBER", "VZ", "WFC", "WMT", "XOM" ]
+  stock_symbols: ["AAPL", "ABBV", "NVDA"]
 preprocess:
   trend_length: 1
   target: "ema"
-  lookback_period: 30
+  window_size: 30
 model:
   epochs: 100
   batch_size: 32
