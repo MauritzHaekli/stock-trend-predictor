@@ -2,8 +2,9 @@ import joblib
 import numpy as np
 import pandas as pd
 import logging
-from backend.src.models.stock_trend_lstm.time_series_preprocessor import TimeSeriesPreprocessor
-from backend.src.models.stock_trend_lstm.label_generator import LabelGenerator
+from backend.src.models.time_series_preprocessor import TimeSeriesPreprocessor
+from backend.src.models.label_generator import LabelGenerator
+from backend.src.models.windowed_dataset_builder import WindowedDatasetBuilder
 from backend.src.models.stock_trend_lstm.stock_trend_lstm_model import StockTrendLSTMModel
 from sklearn.preprocessing import MinMaxScaler
 
@@ -43,8 +44,8 @@ class StockTrendLSTMPipeline:
         logger.info("Preprocessing training/validation data completed")
 
         # 1) Get labeled data (labels + trimmed tail)
-        labeled_train = label_generator.get_labeled_feature_data(preprocessed_training_data)
-        labeled_valid = label_generator.get_labeled_feature_data(preprocessed_validation_data)
+        labeled_train: pd.DataFrame = label_generator.get_labeled_feature_data(preprocessed_training_data)
+        labeled_valid: pd.DataFrame = label_generator.get_labeled_feature_data(preprocessed_validation_data)
 
         # 2) Extract labels as arrays (NO alignment here yet)
         train_labels_full = labeled_train[self.label_column].values
@@ -57,18 +58,16 @@ class StockTrendLSTMPipeline:
         self.scaled_training_feature_data = self.fit_scaler_and_transform(train_features)
         self.scaled_validation_feature_data = self.load_scaler_and_transform(valid_features)
 
-        self.batched_training_feature_data = self.get_feature_data_batches(self.scaled_training_feature_data)
-        self.batched_validation_feature_data = self.get_feature_data_batches(self.scaled_validation_feature_data)
+        dataset_builder: WindowedDatasetBuilder = WindowedDatasetBuilder(self.window_size)
 
-        # Align labels to sequence windows:
-        # For each window [t ... t+window_size-1], we use label at t+window_size-1
-        self.label_training_data = train_labels_full[self.window_size - 1:]
-        self.label_validation_data = valid_labels_full[self.window_size - 1:]
+        self.X_train, self.y_train = dataset_builder.build_sliding_window_dataset(self.scaled_training_feature_data, train_labels_full)
 
-        stock_trend_lstm_model: StockTrendLSTMModel = StockTrendLSTMModel(self.batched_training_feature_data,
-                                                                          self.batched_validation_feature_data,
-                                                                          self.label_training_data,
-                                                                          self.label_validation_data,
+        self.X_val, self.y_val = dataset_builder.build_sliding_window_dataset(self.scaled_validation_feature_data, valid_labels_full)
+
+        stock_trend_lstm_model: StockTrendLSTMModel = StockTrendLSTMModel(self.X_train,
+                                                                          self.X_val,
+                                                                          self.y_train,
+                                                                          self.y_val,
                                                                           self.epochs,
                                                                           self.batch_size)
 
@@ -92,21 +91,3 @@ class StockTrendLSTMPipeline:
         scaler = joblib.load(self.scaler_save_path)
         scaled_values = scaler.transform(df.values)
         return pd.DataFrame(scaled_values, columns=df.columns, index=df.index)
-
-    def get_feature_data_batches(self, data: pd.DataFrame) -> np.ndarray:
-        """
-        Build 3D tensor of shape (num_samples, window_size, num_features)
-        using sliding windows over the scaled feature dataframe.
-        """
-        if len(data) <= self.window_size:
-            raise ValueError("Input data must have more rows than the window size.")
-
-        values = data.values
-        n_samples = len(data) - self.window_size + 1  # +1 so last window ends at last row
-        n_features = values.shape[1]
-
-        batches = np.empty((n_samples, self.window_size, n_features), dtype=values.dtype)
-        for i in range(n_samples):
-            batches[i] = values[i: i + self.window_size]
-
-        return batches
