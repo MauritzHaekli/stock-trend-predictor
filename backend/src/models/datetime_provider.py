@@ -9,7 +9,6 @@ class DatetimeProvider:
 
         :param time_series: A time series with a column containing datetime information.
         :param datetime_column: The name of the datetime column. Defaults to `FeatureColumnNames.DATETIME`.
-        :param validator: An instance of a DatetimeValidator to validate the time series.
         """
         self.column_names: FeatureColumnNames = FeatureColumnNames()
         self.datetime_column = datetime_column or self.column_names.DATETIME

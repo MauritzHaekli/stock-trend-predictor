@@ -19,7 +19,7 @@ def plot_model_accuracy(accuracy_history):
     ax2.plot(accuracy_history.history['loss'][1:], label='Training Loss', color="green")
     ax2.plot(accuracy_history.history['val_loss'][1:], label='Validation Loss', color="#ff4d4d")
 
-    ax2.set_title('Accuracy Plot')
+    ax2.set_title('Loss Plot')
     ax2.set_xlabel('Epoch')
     ax2.set_ylabel('Loss')
     ax2.legend()

@@ -21,7 +21,7 @@ class FeatureProvider:
         cutoff (int): Number of initial rows to exclude due to NaN values from calculations (default: 30).
     """
 
-    def __init__(self, time_series: pd.DataFrame, periods: int = 9, rounding_factor: int = 4, cutoff: int = 30):
+    def __init__(self, time_series: pd.DataFrame, periods: int = 9, rounding_factor: int = 4, cutoff: int = 40):
 
         self.column_names: FeatureColumnNames = FeatureColumnNames()
         self.technical_indicator_provider: TechnicalIndicatorProvider = TechnicalIndicatorProvider(time_series)

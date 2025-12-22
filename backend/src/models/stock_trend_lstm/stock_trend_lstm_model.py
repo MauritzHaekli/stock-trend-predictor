@@ -2,7 +2,7 @@ import logging
 import numpy as np
 from keras.models import Sequential, Model
 from keras.layers import LSTM, Dense, Dropout
-from keras.metrics import Accuracy,Precision, Recall, AUC
+from keras.metrics import BinaryAccuracy,Precision, Recall, AUC
 from keras.regularizers import l2
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, History
@@ -90,7 +90,7 @@ class StockTrendLSTMModel:
 
         learning_rate: float = 0.001
         optimizer = Adam(learning_rate=learning_rate)
-        self.model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=[Accuracy(name='accuracy'),
+        self.model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=[BinaryAccuracy(name='accuracy', threshold=0.5),
                                                                                      Precision(name='precision'),
                                                                                      Recall(name='recall'),
                                                                                      AUC(name='auc')])
