@@ -57,15 +57,19 @@ class LabelGenerator:
 
     def get_aligned_features(self, feature_data: pd.DataFrame) -> pd.DataFrame:
         """
-        Return features aligned with windowed labels.
-
-        feature_data : pd.DataFrame Labeled DataFrame from `get_labeled_feature_data`.
-
-        returns: Features trimmed to align with windowed label sequences.
+        Return feature DataFrame aligned with windowed labels.
+        The label column is removed.
         """
+        self._validate_label_column(feature_data)
+
         if len(feature_data) <= self.window_size:
-            raise ValueError("Feature Data must have more rows than the window size.")
-        return feature_data.iloc[self.window_size:]
+            raise ValueError("Feature data must have more rows than window_size.")
+
+        aligned_features = feature_data.iloc[self.window_size:].drop(
+            columns=[self.label_column]
+        )
+
+        return aligned_features
 
     def build_xy(self, labeled_df: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray]:
         aligned_features: pd.DataFrame = self.get_aligned_features(labeled_df)
