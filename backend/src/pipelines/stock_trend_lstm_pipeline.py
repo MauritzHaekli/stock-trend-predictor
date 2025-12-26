@@ -1,5 +1,4 @@
 import logging
-
 import numpy as np
 import pandas as pd
 from backend.src.preprocessing.time_series_preprocessor import TimeSeriesPreprocessor
@@ -8,6 +7,9 @@ from backend.src.labeling.label_generator import LabelGenerator
 from backend.src.features.feature_scaler import FeatureScaler
 from backend.src.windowing.windowed_dataset_builder import WindowedDatasetBuilder
 from backend.src.models.stock_trend_lstm.stock_trend_lstm_model import StockTrendLSTMModel
+from backend.src.utils.config import Config
+
+config = Config("C:/Users/mohae/Desktop/StockTrendPredictor/backend/config.yaml")
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +75,8 @@ class StockTrendLSTMPipeline:
         train_preprocessed: pd.DataFrame = preprocessor.process_time_series(self.training_data)
         val_preprocessed: pd.DataFrame = preprocessor.process_time_series(self.validation_data)
 
-        train_features_ts: pd.DataFrame = FeatureProvider(train_preprocessed).feature_time_series
-        val_features_ts: pd.DataFrame = FeatureProvider(val_preprocessed).feature_time_series
+        train_features_ts: pd.DataFrame = FeatureProvider(train_preprocessed, config.as_dict()).feature_time_series
+        val_features_ts: pd.DataFrame = FeatureProvider(val_preprocessed, config.as_dict()).feature_time_series
 
         label_generator: LabelGenerator = LabelGenerator(
             target_feature=self.target_feature,

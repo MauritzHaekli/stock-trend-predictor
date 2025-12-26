@@ -16,9 +16,7 @@ technical_indicator_parameters:
   macd_long_period: 26
   macd_signal_period: 9
   rsi_period: 14
-  sma_short_period: 9
-  sma_middle_period: 12
-  sma_long_period: 20
+  sma_period: 9
 calculation_parameters:
   rounding_factor: 2
   rounding_factor_small: 4

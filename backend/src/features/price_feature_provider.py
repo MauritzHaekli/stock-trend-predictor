@@ -1,13 +1,11 @@
 import pandas as pd
 import numpy as np
-from backend.src.features.feature_column_names import FeatureColumnNames
 
 
 class PriceFeatureProvider:
 
     def __init__(self, time_series: pd.DataFrame):
         self.time_series: pd.DataFrame = time_series
-        self.feature_column_names = FeatureColumnNames
         self.price_return: pd.Series = self.get_price_return()
         self.log_return: pd.Series = self.get_log_return()
         self.price_volatility: pd.Series = self.get_price_volatility()

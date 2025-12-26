@@ -1,97 +1,58 @@
 import pandas as pd
-from backend.src.features.feature_column_names import FeatureColumnNames
-from backend.src.features.feature_change_calculator import FeatureChangeCalculator
 from backend.src.features.technical_indicator_provider import TechnicalIndicatorProvider
+from backend.src.features.datetime_provider import DatetimeProvider
+from backend.src.schema.raw_ohlcv import RawOHLCVColumns
 
 
 class FeatureProvider:
     """
-    Enhances a time series DataFrame containing OHLC (Open, High, Low, Close) stock data by adding calculated features.
-
-    Features include:
-        - Technical indicators (e.g., SMA, EMA, RSI).
-        - Trend and change features for OHLC prices and volume.
-        - Datetime-based features like day and hour of each record.
-
-    Parameters:
-        time_series (pd.DataFrame): DataFrame containing stock OHLC and volume data.
-        periods (int): Number of periods for change and trend calculations (default: 9).
-        rounding_factor (int): Decimal places to round feature values (default: 4).
-        cutoff (int): Number of initial rows to exclude due to NaN values from calculations (default: 30).
+    Builds the full feature matrix used for modeling by combining
+    multiple feature sources (OHLCV, technical indicators, etc.).
     """
 
-    def __init__(self, time_series: pd.DataFrame, periods: int = 9, rounding_factor: int = 4, cutoff: int = 40):
+    def __init__(self, time_series: pd.DataFrame, params: dict, cutoff: int = 40):
+        self.time_series = time_series
+        self.params = params
+        self.cutoff = cutoff
 
-        self.column_names: FeatureColumnNames = FeatureColumnNames()
-        self.technical_indicator_provider: TechnicalIndicatorProvider = TechnicalIndicatorProvider(time_series)
-        self.time_series: pd.DataFrame = time_series
-        self.periods: int = periods
-        self.rounding_factor: int = rounding_factor
-        self.cutoff: int = cutoff
+        self.raw_ohlcv_columns = RawOHLCVColumns()
 
-        self.technical_indicators: pd.DataFrame = self.technical_indicator_provider.technical_indicators
-        self.feature_time_series: pd.DataFrame = self.build_feature_time_series()
+        self.technical_indicator_provider = TechnicalIndicatorProvider(time_series=time_series,params=params)
+        self.datetime_provider = DatetimeProvider(self.time_series)
 
-    def build_feature_time_series(self) -> pd.DataFrame:
+        self.feature_time_series = self._build_feature_time_series()
+
+    def _build_feature_time_series(self) -> pd.DataFrame:
         """
-        Constructs the feature-enriched time series with additional technical indicators, datetime features, and change metrics.
-
-        :return: DataFrame with original OHLC data, technical indicators, and calculated features.
+        Combine all feature blocks into a single DataFrame.
         """
-        feature_data = pd.DataFrame()
-        # feature_data[self.column_names.DATETIME] = self.time_series[self.column_names.DATETIME]
 
-        ohlc_features = {
-            self.column_names.OPEN_PRICE: self.time_series[self.column_names.OPEN_PRICE],
-            self.column_names.HIGH_PRICE: self.time_series[self.column_names.HIGH_PRICE],
-            self.column_names.LOW_PRICE: self.time_series[self.column_names.LOW_PRICE],
-            self.column_names.CLOSE_PRICE: self.time_series[self.column_names.CLOSE_PRICE],
-            self.column_names.VOLUME: self.time_series[self.column_names.VOLUME],
-        }
+        ohlcv_features = pd.DataFrame(
+            {
+                self.raw_ohlcv_columns.OPEN: self.time_series[self.raw_ohlcv_columns.OPEN],
+                self.raw_ohlcv_columns.HIGH: self.time_series[self.raw_ohlcv_columns.HIGH],
+                self.raw_ohlcv_columns.LOW: self.time_series[self.raw_ohlcv_columns.LOW],
+                self.raw_ohlcv_columns.CLOSE: self.time_series[self.raw_ohlcv_columns.CLOSE],
+                self.raw_ohlcv_columns.VOLUME: self.time_series[self.raw_ohlcv_columns.VOLUME],
+            },
+            index=self.time_series.index,
+        )
 
-        for feature_name, feature_series in ohlc_features.items():
-            feature_data[feature_name] = feature_series
+        technical_indicators: pd.DataFrame= self.technical_indicator_provider.technical_indicators
 
-        tech_indicators: list[str] = [self.column_names.ADX,
-                                      self.column_names.ATR,
-                                      self.column_names.SMA,
-                                      self.column_names.EMA,
-                                      self.column_names.RSI,
-                                      self.column_names.MACD_SIGNAL,
-                                      self.column_names.PERCENT_B]
+        datetime_features = self.datetime_provider.day_and_hour()
 
-        for indicator in tech_indicators:
-            feature_data[indicator] = self.technical_indicators[indicator].shift(1)
 
-        selected_columns = []
+        feature_data = pd.concat(
+            [
+                ohlcv_features,
+                technical_indicators,
+                datetime_features
+            ],
+            axis=1,
+        )
 
-        for feature_series in selected_columns:
-            feature_data = self.add_feature_change_columns(feature_data, feature_data[feature_series], self.periods)
-
-        # datetime_provider = DatetimeProvider(self.time_series)
-        # feature_data[self.column_names.DAY] = datetime_provider.get_day_series()
-        # feature_data[self.column_names.HOUR] = datetime_provider.get_hour_series()
-
-        return feature_data[self.cutoff:]
-
-    def add_feature_change_columns(self, feature_data: pd.DataFrame,
-                                   series: pd.Series, periods: int) -> pd.DataFrame:
-        """
-        Adds latest and recent change columns for absolute, percentage, and trend changes of a given feature.
-
-        :param feature_data: DataFrame to which the new columns will be added.
-        :param series: Series of the feature values.
-        :param periods: The number of periods we go back to calculate a change for
-        :return: DataFrame with added feature change columns.
-        """
-        feature_calculator = FeatureChangeCalculator(series, self.rounding_factor)
-        series_name = series.name
-        for period in range(1, periods + 1):
-            feature_absolute_change_name: str = f"{series_name}_({period}_change)"
-            feature_relative_change_name: str = f"{series_name}_({period}_change(%))"
-            feature_trend_change_name: str = f"{series_name}_({period}_trend)"
-            feature_data[feature_absolute_change_name] = feature_calculator.get_absolute_change(period)
-            feature_data[feature_relative_change_name] = feature_calculator.get_relative_change(period)
-            feature_data[feature_trend_change_name] = feature_calculator.get_trend_change(period)
+        feature_data = feature_data.iloc[self.cutoff:]
 
         return feature_data
+

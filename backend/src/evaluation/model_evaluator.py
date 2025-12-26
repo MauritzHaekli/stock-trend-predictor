@@ -56,7 +56,7 @@ class ModelEvaluator:
     def predict(self, threshold: float = 0.5) -> np.ndarray:
         return (self.y_proba >= threshold).astype(int)
 
-    def plot_model_accurcy(self) -> None:
+    def plot_model_accuracy(self) -> None:
         if self.history is None:
             raise ValueError("No history provided. Pass history=... to ModelEvaluator.")
 
@@ -68,7 +68,7 @@ class ModelEvaluator:
         if "accuracy" in hist:
             plt.plot(hist["accuracy"], label="train accuracy", color="green")
         if "val_accuracy" in hist:
-            plt.plot(hist["val_accuracy"], label="val accuracy", color="ff4d4d")
+            plt.plot(hist["val_accuracy"], label="val accuracy", color="#ff4d4d")
         plt.title("Accuracy")
         plt.xlabel("Epoch")
         plt.ylabel("Accuracy")
