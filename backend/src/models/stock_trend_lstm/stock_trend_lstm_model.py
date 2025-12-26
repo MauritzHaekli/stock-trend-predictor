@@ -98,8 +98,6 @@ class StockTrendLSTMModel:
     def train_model(self) -> History:
         if self.model is None:
             raise RuntimeError("Model has not been built.")
-        logger.info(f"Train label mean: {self.label_training_data.mean().round(4)}")
-        logger.info(f"Validation label mean: {self.label_validation_data.mean().round(4)}")
 
         early_stopping: EarlyStopping = EarlyStopping(
             monitor='val_loss',

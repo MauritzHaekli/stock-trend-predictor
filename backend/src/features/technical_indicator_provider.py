@@ -2,10 +2,10 @@ import pandas as pd
 from ta.momentum import RSIIndicator
 from ta.volatility import BollingerBands, AverageTrueRange
 from ta.trend import ADXIndicator, EMAIndicator, MACD, SMAIndicator
-from backend.src.models.feature_column_names import FeatureColumnNames
+from backend.src.features.feature_column_names import FeatureColumnNames
 from backend.src.utils.config import Config
 
-config = Config("C:/Users/mohae/Desktop/StockTrendPredictor/backend//config.yaml")
+config = Config("C:/Users/mohae/Desktop/StockTrendPredictor/backend/config.yaml")
 
 class TechnicalIndicatorProvider:
     def __init__(self, time_series: pd.DataFrame):

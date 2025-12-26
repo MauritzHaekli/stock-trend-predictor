@@ -1,5 +1,4 @@
 import pandas as pd
-from backend.src.models.feature_column_names import FeatureColumnNames
 
 
 class DatetimeProvider:
@@ -10,19 +9,10 @@ class DatetimeProvider:
         :param time_series: A time series with a column containing datetime information.
         :param datetime_column: The name of the datetime column. Defaults to `FeatureColumnNames.DATETIME`.
         """
-        self.column_names: FeatureColumnNames = FeatureColumnNames()
-        self.datetime_column = datetime_column or self.column_names.DATETIME
+        if not isinstance(time_series.index, pd.DatetimeIndex):
+            raise TypeError("DataFrame index must be DatetimeIndex")
 
-        try:
-            self.datetime_series: pd.Series = (
-                time_series[self.datetime_column]
-                if pd.api.types.is_datetime64_any_dtype(time_series[self.datetime_column])
-                else pd.to_datetime(time_series[self.datetime_column])
-            )
-        except Exception as e:
-            raise ValueError(
-                f"Failed to parse datetime column '{self.datetime_column}' in the DataFrame: {e}"
-            )
+        self.index = time_series.index
 
     def get_day_series(self) -> pd.Series:
         """
@@ -30,7 +20,7 @@ class DatetimeProvider:
 
         :return: A pandas Series with integer values representing the day of the week (0 = Monday, 6 = Sunday).
         """
-        return self.datetime_series.dt.dayofweek
+        return pd.Series(self.index.hour, index=self.index, name="hour")
 
     def get_hour_series(self) -> pd.Series:
         """

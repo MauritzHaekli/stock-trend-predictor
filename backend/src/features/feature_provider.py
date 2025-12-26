@@ -1,8 +1,7 @@
 import pandas as pd
-from backend.src.models.feature_column_names import FeatureColumnNames
-from backend.src.models.feature_change_calculator import FeatureChangeCalculator
-from backend.src.models.technical_indicator_provider import TechnicalIndicatorProvider
-from backend.src.models.datetime_provider import DatetimeProvider
+from backend.src.features.feature_column_names import FeatureColumnNames
+from backend.src.features.feature_change_calculator import FeatureChangeCalculator
+from backend.src.features.technical_indicator_provider import TechnicalIndicatorProvider
 
 
 class FeatureProvider:
@@ -40,7 +39,7 @@ class FeatureProvider:
         :return: DataFrame with original OHLC data, technical indicators, and calculated features.
         """
         feature_data = pd.DataFrame()
-        feature_data[self.column_names.DATETIME] = self.time_series[self.column_names.DATETIME]
+        # feature_data[self.column_names.DATETIME] = self.time_series[self.column_names.DATETIME]
 
         ohlc_features = {
             self.column_names.OPEN_PRICE: self.time_series[self.column_names.OPEN_PRICE],
@@ -69,9 +68,9 @@ class FeatureProvider:
         for feature_series in selected_columns:
             feature_data = self.add_feature_change_columns(feature_data, feature_data[feature_series], self.periods)
 
-        datetime_provider = DatetimeProvider(self.time_series)
-        feature_data[self.column_names.DAY] = datetime_provider.get_day_series()
-        feature_data[self.column_names.HOUR] = datetime_provider.get_hour_series()
+        # datetime_provider = DatetimeProvider(self.time_series)
+        # feature_data[self.column_names.DAY] = datetime_provider.get_day_series()
+        # feature_data[self.column_names.HOUR] = datetime_provider.get_hour_series()
 
         return feature_data[self.cutoff:]
 
