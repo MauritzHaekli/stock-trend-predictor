@@ -192,6 +192,109 @@ class ModelEvaluator:
         plt.grid(True)
         plt.show()
 
+    def plot_probability_distribution(
+            self,
+            bins: int = 50,
+            log_y: bool = False,
+            show_thresholds: list[float] | None = None,
+    ) -> None:
+        """
+        Plot side-by-side distributions of predicted probabilities
+        for y_true = 0 and y_true = 1.
+
+        Parameters
+        ----------
+        bins : int
+            Number of histogram bins.
+        log_y : bool
+            If True, uses log scale on y-axis (useful for imbalance).
+        show_thresholds : list[float] | None
+            Optional list of thresholds to draw as vertical lines
+            (e.g. [0.5, 0.48]).
+        """
+
+        proba_neg = self.y_proba[self.y_true == 0]
+        proba_pos = self.y_proba[self.y_true == 1]
+
+        fig, axes = plt.subplots(1, 2, figsize=(12, 4), sharex=True)
+
+        # --- y = 0 ---
+        axes[0].hist(
+            proba_neg,
+            bins=bins,
+            density=True,
+            alpha=0.8,
+            color="red",
+        )
+        axes[0].set_title("Predicted probabilities | y = 0")
+        axes[0].set_xlabel("Predicted probability (p̂)")
+        axes[0].set_ylabel("Density")
+        axes[0].grid(True)
+
+        # --- y = 1 ---
+        axes[1].hist(
+            proba_pos,
+            bins=bins,
+            density=True,
+            alpha=0.8,
+            color="green",
+        )
+        axes[1].set_title("Predicted probabilities | y = 1")
+        axes[1].set_xlabel("Predicted probability (p̂)")
+        axes[1].grid(True)
+
+        if show_thresholds:
+            for t in show_thresholds:
+                for ax in axes:
+                    ax.axvline(
+                        float(t),
+                        linestyle="--",
+                        linewidth=1,
+                        color="black",
+                        alpha=0.7,
+                    )
+
+        if log_y:
+            for ax in axes:
+                ax.set_yscale("log")
+
+        for ax in axes:
+            ax.set_xlim(0, 1)
+
+        plt.tight_layout()
+        plt.show()
+
+    def summary_probability_stats(self) -> pd.DataFrame | None:
+        """
+        Print and optionally return summary statistics of predicted probabilities.
+
+        Reports p10 / p50 / p90:
+        - Overall
+        - For true negatives (y_true == 0)
+        - For true positives (y_true == 1)
+        """
+
+
+        rows = []
+
+        q_all = self._quantiles(self.y_proba)
+        rows.append({"group": "overall", **q_all})
+
+        # Per class
+        for cls in (0, 1):
+            mask = self.y_true == cls
+            if mask.any():
+                q_cls = self._quantiles(self.y_proba[mask])
+                rows.append({"group": f"class_{cls}", **q_cls})
+
+        df = pd.DataFrame(rows)
+
+        print("\nPredicted probability quantiles:")
+        print(df.to_string(index=False, float_format=lambda x: f"{x:.4f}"))
+
+        return df
+
+
     def compute_validation_metrics(self, threshold: float = 0.5) -> dict:
         y_pred = self.predict(threshold)
         return {
@@ -201,4 +304,11 @@ class ModelEvaluator:
             "recall": recall_score(self.y_true, y_pred, zero_division=0),
             "f1": f1_score(self.y_true, y_pred, zero_division=0),
             "roc_auc": self.roc_auc(),
+        }
+
+    def _quantiles(self, x: np.ndarray) -> dict:
+        return {
+            "p10": np.quantile(x, 0.10),
+            "p50": np.quantile(x, 0.50),
+            "p90": np.quantile(x, 0.90),
         }

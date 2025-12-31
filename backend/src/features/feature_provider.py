@@ -1,5 +1,7 @@
 import pandas as pd
 from backend.src.features.technical_indicator_provider import TechnicalIndicatorProvider
+from backend.src.features.core_dynamics_provider import CoreDynamicsProvider
+from backend.src.features.returns_provider import ReturnsProvider
 from backend.src.features.datetime_provider import DatetimeProvider
 from backend.src.schema.raw_ohlcv import RawOHLCVColumns
 
@@ -18,6 +20,11 @@ class FeatureProvider:
         self.raw_ohlcv_columns = RawOHLCVColumns()
 
         self.technical_indicator_provider = TechnicalIndicatorProvider(time_series=time_series,params=params)
+        self.core = CoreDynamicsProvider(close_price=time_series[RawOHLCVColumns.CLOSE],
+                                         ema_series=self.technical_indicator_provider.ema,
+                                         atr_series=self.technical_indicator_provider.atr,
+                                         rounding_factor=4)
+        self.returns_provider = ReturnsProvider(close_price=time_series[RawOHLCVColumns.CLOSE])
         self.datetime_provider = DatetimeProvider(self.time_series)
 
         self.feature_time_series = self._build_feature_time_series()
@@ -38,7 +45,10 @@ class FeatureProvider:
             index=self.time_series.index,
         )
 
-        technical_indicators: pd.DataFrame= self.technical_indicator_provider.technical_indicators
+        technical_indicators: pd.DataFrame = self.technical_indicator_provider.technical_indicators
+        core_dynamics: pd.DataFrame = self.core.core_dynamics
+        returns: pd.DataFrame = self.returns_provider.returns
+
 
         datetime_features = self.datetime_provider.day_and_hour()
 
@@ -47,6 +57,8 @@ class FeatureProvider:
             [
                 ohlcv_features,
                 technical_indicators,
+                core_dynamics,
+                returns,
                 datetime_features
             ],
             axis=1,

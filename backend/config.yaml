@@ -1,9 +1,11 @@
 time_series_provider_parameters:
   api_key: "82535d7d9eb84b5d905463e011aaaee8"
-  interval: "1min"
+  interval: "1h"
   order: "ASC"
-  symbol: "APPL"
+  symbol: "NVDA"
   output: 5000
+  start_date: "2017-01-01"
+  end_date: "2017-12-31"
   decimal_places: 2
   time_series_key: "time_series"
 technical_indicator_parameters:
