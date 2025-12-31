@@ -2,7 +2,7 @@ time_series_provider_parameters:
   api_key: "82535d7d9eb84b5d905463e011aaaee8"
   interval: "1h"
   order: "ASC"
-  symbol: "NVDA"
+  symbol: "AMZN"
   output: 5000
   start_date: "2017-01-01"
   end_date: "2017-12-31"

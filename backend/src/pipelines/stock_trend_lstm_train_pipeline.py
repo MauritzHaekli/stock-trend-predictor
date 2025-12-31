@@ -14,9 +14,9 @@ config = Config("C:/Users/mohae/Desktop/StockTrendPredictor/backend/config.yaml"
 logger = logging.getLogger(__name__)
 
 
-class StockTrendLSTMPipeline:
+class StockTrendLSTMTrainPipeline:
     """
-    End-to-end pipeline for LSTM-based stock trend prediction.
+    End-to-end training pipeline for LSTM-based stock trend prediction.
 
     PIPELINE STAGES
     ----------------

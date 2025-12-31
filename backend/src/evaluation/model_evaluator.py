@@ -34,10 +34,9 @@ class ModelEvaluator:
     - Training curves (if history provided)
     """
 
-    def __init__(self, y_true: np.ndarray, y_proba: np.ndarray, history: History | None = None):
+    def __init__(self, y_true: np.ndarray, y_proba: np.ndarray):
         self.y_true = np.asarray(y_true).astype(int).ravel()
         self.y_proba = np.asarray(y_proba).astype(float).ravel()
-        self.history = history
 
         self._validate_inputs()
 
@@ -56,11 +55,9 @@ class ModelEvaluator:
     def predict(self, threshold: float = 0.5) -> np.ndarray:
         return (self.y_proba >= threshold).astype(int)
 
-    def plot_model_accuracy(self) -> None:
-        if self.history is None:
-            raise ValueError("No history provided. Pass history=... to ModelEvaluator.")
+    def plot_model_accuracy(self, history: History) -> None:
 
-        hist = self.history.history
+        hist = history.history
 
         plt.figure(figsize=(12, 4))
 
