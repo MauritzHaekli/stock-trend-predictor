@@ -2,6 +2,7 @@ import pandas as pd
 from backend.src.features.technical_indicator_provider import TechnicalIndicatorProvider
 from backend.src.features.core_dynamics_provider import CoreDynamicsProvider
 from backend.src.features.returns_provider import ReturnsProvider
+from backend.src.features.binary_indicator_provider import BinaryIndicatorProvider
 from backend.src.features.datetime_provider import DatetimeProvider
 from backend.src.schema.raw_ohlcv import RawOHLCVColumns
 
@@ -20,11 +21,17 @@ class FeatureProvider:
         self.raw_ohlcv_columns = RawOHLCVColumns()
 
         self.technical_indicator_provider = TechnicalIndicatorProvider(time_series=time_series,params=params)
-        self.core = CoreDynamicsProvider(close_price=time_series[RawOHLCVColumns.CLOSE],
-                                         ema_series=self.technical_indicator_provider.ema,
-                                         atr_series=self.technical_indicator_provider.atr,
-                                         rounding_factor=4)
+        self.core_dynamics_provider = CoreDynamicsProvider(close_price=time_series[RawOHLCVColumns.CLOSE],
+                                                           ema_series=self.technical_indicator_provider.ema,
+                                                           atr_series=self.technical_indicator_provider.atr,
+                                                           rounding_factor=4)
         self.returns_provider = ReturnsProvider(close_price=time_series[RawOHLCVColumns.CLOSE])
+        self.binary_indicator_provider = BinaryIndicatorProvider(close_price=time_series[RawOHLCVColumns.CLOSE],
+                                                                 ema_series=self.technical_indicator_provider.ema,
+                                                                 ema_slope=self.core_dynamics_provider.ema_relative_slope,
+                                                                 log_return=self.returns_provider.log_return_n(n=1),
+                                                                 atr_series=self.technical_indicator_provider.atr,
+                                                                 bollinger_series=self.technical_indicator_provider.bollinger_percent)
         self.datetime_provider = DatetimeProvider(self.time_series)
 
         self.feature_time_series = self._build_feature_time_series()
@@ -46,8 +53,9 @@ class FeatureProvider:
         )
 
         technical_indicators: pd.DataFrame = self.technical_indicator_provider.technical_indicators
-        core_dynamics: pd.DataFrame = self.core.core_dynamics
+        core_dynamics: pd.DataFrame = self.core_dynamics_provider.core_dynamics
         returns: pd.DataFrame = self.returns_provider.returns
+        binary_indicators: pd.DataFrame = self.binary_indicator_provider.binary_indicators
 
 
         datetime_features = self.datetime_provider.day_and_hour()
@@ -59,6 +67,7 @@ class FeatureProvider:
                 technical_indicators,
                 core_dynamics,
                 returns,
+                binary_indicators,
                 datetime_features
             ],
             axis=1,

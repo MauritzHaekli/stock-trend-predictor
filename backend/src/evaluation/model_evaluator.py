@@ -11,6 +11,7 @@ from sklearn.metrics import (
     recall_score,
     f1_score
 )
+from sklearn.calibration import calibration_curve
 import seaborn as sns
 from keras.callbacks import History
 
@@ -54,38 +55,6 @@ class ModelEvaluator:
 
     def predict(self, threshold: float = 0.5) -> np.ndarray:
         return (self.y_proba >= threshold).astype(int)
-
-    def plot_model_accuracy(self, history: History) -> None:
-
-        hist = history.history
-
-        plt.figure(figsize=(12, 4))
-
-        plt.subplot(1, 2, 1)
-        if "accuracy" in hist:
-            plt.plot(hist["accuracy"], label="train accuracy", color="green")
-        if "val_accuracy" in hist:
-            plt.plot(hist["val_accuracy"], label="val accuracy", color="#ff4d4d")
-        plt.title("Accuracy")
-        plt.xlabel("Epoch")
-        plt.ylabel("Accuracy")
-        plt.legend()
-        plt.grid(True)
-
-        # Loss
-        plt.subplot(1, 2, 2)
-        plt.plot(hist["loss"], label="train loss")
-        if "val_loss" in hist:
-            plt.plot(hist["val_loss"], label="val loss")
-        plt.title("Loss")
-        plt.xlabel("Epoch")
-        plt.ylabel("Loss")
-        plt.legend()
-        plt.grid(True)
-
-        plt.tight_layout()
-        plt.show()
-
 
     def plot_confusion_matrix(self, threshold: float = 0.5, normalize: bool = False) -> None:
         y_pred = self.predict(threshold)
@@ -169,7 +138,7 @@ class ModelEvaluator:
                 "accuracy": accuracy_score(self.y_true, y_pred),
                 "precision": precision_score(self.y_true, y_pred, zero_division=0),
                 "recall": recall_score(self.y_true, y_pred, zero_division=0),
-                "f1": f1_score(self.y_true, y_pred, zero_division=0),
+                "f1": f1_score(self.y_true, y_pred, zero_division=0)
             })
 
         return pd.DataFrame(rows)
@@ -261,36 +230,110 @@ class ModelEvaluator:
         plt.tight_layout()
         plt.show()
 
-    def summary_probability_stats(self) -> pd.DataFrame | None:
+    def summary_probability_stats(self) -> pd.DataFrame:
         """
-        Print and optionally return summary statistics of predicted probabilities.
-
-        Reports p10 / p50 / p90:
-        - Overall
-        - For true negatives (y_true == 0)
-        - For true positives (y_true == 1)
+        Print and return quantile statistics (p10 / p50 / p90)
+        for predicted probabilities overall and per class.
         """
 
+        rows = {
+            "overall": self._quantiles(self.y_proba),
+            "y=0": self._quantiles(self.y_proba[self.y_true == 0]),
+            "y=1": self._quantiles(self.y_proba[self.y_true == 1]),
+        }
 
-        rows = []
+        df = pd.DataFrame(rows).T
+        return df.round(4)
 
-        q_all = self._quantiles(self.y_proba)
-        rows.append({"group": "overall", **q_all})
+    def plot_probability_kde(
+            self,
+            show_quantiles: bool = True,
+            quantiles: tuple[float, float, float] = (0.1, 0.5, 0.9),
+    ):
+        """
+        Plot KDE distributions of predicted probabilities for each class
+        in side-by-side subplots.
+        """
 
-        # Per class
-        for cls in (0, 1):
-            mask = self.y_true == cls
-            if mask.any():
-                q_cls = self._quantiles(self.y_proba[mask])
-                rows.append({"group": f"class_{cls}", **q_cls})
+        proba_neg = self.y_proba[self.y_true == 0]
+        proba_pos = self.y_proba[self.y_true == 1]
 
-        df = pd.DataFrame(rows)
+        fig, axes = plt.subplots(1, 2, figsize=(12, 4), sharey=True)
 
-        print("\nPredicted probability quantiles:")
-        print(df.to_string(index=False, float_format=lambda x: f"{x:.4f}"))
+        sns.kdeplot(proba_neg, ax=axes[0], fill=True, color="red")
+        axes[0].set_title(f"y=0 (n={len(proba_neg)})")
+        axes[0].set_xlabel("Predicted probability")
 
-        return df
+        sns.kdeplot(proba_pos, ax=axes[1], fill=True, color="green")
+        axes[1].set_title(f"y=1 (n={len(proba_pos)})")
+        axes[1].set_xlabel("Predicted probability")
 
+        if show_quantiles:
+            for q in quantiles:
+                axes[0].axvline(np.quantile(proba_neg, q), linestyle="--", color="black", alpha=0.6)
+                axes[1].axvline(np.quantile(proba_pos, q), linestyle="--", color="black", alpha=0.6)
+
+        for ax in axes:
+            ax.set_xlim(0, 1)
+            ax.grid(True)
+
+        plt.tight_layout()
+        plt.show()
+
+    def plot_calibration_curve(self, n_bins: int = 10):
+        """
+        Plot calibration (reliability) curve.
+        """
+
+        frac_pos, mean_pred = calibration_curve(
+            self.y_true,
+            self.y_proba,
+            n_bins=n_bins,
+            strategy="uniform",
+        )
+
+        plt.figure(figsize=(5, 5))
+        plt.plot(mean_pred, frac_pos, marker="o", label="Model")
+        plt.plot([0, 1], [0, 1], linestyle="--", color="gray", label="Perfect calibration")
+
+        plt.xlabel("Mean predicted probability")
+        plt.ylabel("Observed positive rate")
+        plt.title("Calibration Curve (Reliability Diagram)")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+    def expected_precision_at_threshold(self, threshold: float) -> float:
+        """
+        Expected precision when acting only on predictions >= threshold.
+        """
+        y_pred = self.predict(threshold)
+        mask = y_pred == 1
+
+        if mask.sum() == 0:
+            return 0.0
+
+        return precision_score(self.y_true[mask], y_pred[mask], zero_division=0)
+
+    def expected_calibration_error(self, n_bins: int = 10) -> float:
+        """
+        Expected Calibration Error (ECE).
+        """
+
+        bins = np.linspace(0, 1, n_bins + 1)
+        bin_ids = np.digitize(self.y_proba, bins) - 1
+
+        ece = 0.0
+        for i in range(n_bins):
+            mask = bin_ids == i
+            if mask.sum() == 0:
+                continue
+
+            acc = self.y_true[mask].mean()
+            conf = self.y_proba[mask].mean()
+            ece += np.abs(acc - conf) * (mask.sum() / len(self.y_true))
+
+        return ece
 
     def compute_validation_metrics(self, threshold: float = 0.5) -> dict:
         y_pred = self.predict(threshold)
@@ -300,12 +343,20 @@ class ModelEvaluator:
             "precision": precision_score(self.y_true, y_pred, zero_division=0),
             "recall": recall_score(self.y_true, y_pred, zero_division=0),
             "f1": f1_score(self.y_true, y_pred, zero_division=0),
-            "roc_auc": self.roc_auc(),
+            "roc_auc": self.roc_auc()
         }
 
-    def _quantiles(self, x: np.ndarray) -> dict:
+    def compute_precision_scores(self):
+        return {
+            "10%": self.expected_precision_at_threshold(threshold=0.1),
+            "50%": self.expected_precision_at_threshold(threshold=0.5),
+            "90%": self.expected_precision_at_threshold(threshold=0.9),
+        }
+
+    def _quantiles(self, x):
         return {
             "p10": np.quantile(x, 0.10),
             "p50": np.quantile(x, 0.50),
             "p90": np.quantile(x, 0.90),
+            "mean": np.mean(x),
         }

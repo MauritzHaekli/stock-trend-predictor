@@ -89,6 +89,10 @@ class TechnicalIndicatorProvider:
         return self.get_indicator(self.technical_indicator_columns.ATR)
 
     @property
+    def bollinger_percent(self) -> pd.Series:
+        return self.get_indicator(self.technical_indicator_columns.BOLLINGER_B)
+
+    @property
     def technical_indicators(self) -> pd.DataFrame:
         if self._technical_indicators is None:
             self._technical_indicators = self._compute_technical_indicators()

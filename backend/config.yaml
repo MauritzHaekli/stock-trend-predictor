@@ -27,8 +27,8 @@ feature_engineering:
   stock_symbols: ["AAPL", "ABBV", "NVDA"]
 preprocess:
   trend_length: 1
-  target: "ema"
+  target: "EMA"
   window_size: 30
 model:
   epochs: 100
-  batch_size: 32
+  batch_size: 64

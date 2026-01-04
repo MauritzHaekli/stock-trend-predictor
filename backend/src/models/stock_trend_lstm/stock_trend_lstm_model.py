@@ -6,6 +6,8 @@ from keras.metrics import BinaryAccuracy,Precision, Recall, AUC
 from keras.regularizers import l2
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, History
+from tqdm.keras import TqdmCallback
+from backend.src.models.live_plot_callbacks import LivePlotCallback
 
 logger = logging.getLogger(__name__)
 
@@ -90,14 +92,24 @@ class StockTrendLSTMModel:
 
         learning_rate: float = 0.001
         optimizer = Adam(learning_rate=learning_rate)
-        self.model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=[BinaryAccuracy(name='accuracy', threshold=0.5),
-                                                                                     Precision(name='precision'),
-                                                                                     Recall(name='recall'),
-                                                                                     AUC(name='auc')])
+        self.model.compile(
+            optimizer=optimizer,
+            loss='binary_crossentropy',
+            metrics=[
+                BinaryAccuracy(name='accuracy'),
+                Precision(name='precision'),
+                Recall(name='recall'),
+                AUC(name='auc', curve='ROC'),
+                AUC(name='pr_auc', curve='PR'),
+            ]
+        )
 
     def train_model(self) -> History:
         if self.model is None:
             raise RuntimeError("Model has not been built.")
+
+        live_plot = LivePlotCallback()
+        tqdm_bar = TqdmCallback(verbose=1)
 
         early_stopping: EarlyStopping = EarlyStopping(
             monitor='val_loss',
@@ -106,15 +118,14 @@ class StockTrendLSTMModel:
             min_delta=0.001
         )
 
-        self.model.summary()
-
         history: History = self.model.fit(
             self.batched_training_data,
             self.label_training_data,
             epochs=self.epochs,
             batch_size=self.batch_size,
             validation_data=(self.batched_validation_data, self.label_validation_data),
-            callbacks=[early_stopping]
+            callbacks=[early_stopping, tqdm_bar, live_plot],
+            verbose=0
         )
 
         self.model.save(self.model_save_path)

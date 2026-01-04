@@ -34,23 +34,21 @@ class CoreDynamicsProvider:
         Return all core dynamics features as a single DataFrame.
         """
         core_dynamics = {
-            self.core_dynamics_columns.RELATIVE_EMA_DISTANCE: self.ema_relative_distance,
-            self.core_dynamics_columns.EMA_DISTANCE_DELTA: self.ema_distance_delta,
+            self.core_dynamics_columns.RELATIVE_EMA_DISTANCE: self.get_ema_relative_distance(distance_periods=0),
+            self.core_dynamics_columns.EMA_DISTANCE_CHANGE: self.get_ema_distance_change(periods=1),
             self.core_dynamics_columns.ATR_NORMALIZED_EMA_DISTANCE: self.ema_normalized_atr_distance,
-            self.core_dynamics_columns.CLOSE_ABOVE_EMA: self.close_above_ema,
             self.core_dynamics_columns.EMA_RELATIVE_SLOPE: self.ema_relative_slope,
             self.core_dynamics_columns.EMA_ACCELERATION: self.ema_acceleration,
         }
 
         return pd.DataFrame(core_dynamics, index=self.close.index)
 
-    @property
-    def ema_relative_distance(self) -> pd.Series:
+    def get_ema_relative_distance(self, distance_periods: int) -> pd.Series:
         """
         Relative distance of price to EMA:
         (Close - EMA) / EMA
         """
-        distance = (self.close - self.ema) / self.ema
+        distance = (self.close - self.ema.shift(-distance_periods)) / self.ema.shift(-distance_periods)
         distance.name = self.core_dynamics_columns.RELATIVE_EMA_DISTANCE
 
         if self.rounding_factor is not None:
@@ -58,10 +56,9 @@ class CoreDynamicsProvider:
 
         return distance
 
-    @property
-    def ema_distance_delta(self) -> pd.Series:
-        delta = self.ema_relative_distance.diff()
-        delta.name = self.core_dynamics_columns.EMA_DISTANCE_DELTA
+    def get_ema_distance_change(self, periods=1) -> pd.Series:
+        delta = self.get_ema_relative_distance(0).diff(periods)
+        delta.name = self.core_dynamics_columns.EMA_DISTANCE_CHANGE
         return delta
 
     @property
@@ -78,11 +75,6 @@ class CoreDynamicsProvider:
 
         return normalized_atr_distance
 
-    @property
-    def close_above_ema(self) -> pd.Series:
-        close_above_ema = (self.close > self.ema).astype(int)
-        close_above_ema.name = self.core_dynamics_columns.CLOSE_ABOVE_EMA
-        return close_above_ema
 
     @property
     def ema_relative_slope(self) -> pd.Series:

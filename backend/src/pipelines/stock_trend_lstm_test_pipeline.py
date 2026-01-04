@@ -6,7 +6,6 @@ from backend.src.features.feature_provider import FeatureProvider
 from backend.src.labeling.label_generator import LabelGenerator
 from backend.src.features.feature_scaler import FeatureScaler
 from backend.src.windowing.windowed_dataset_builder import WindowedDatasetBuilder
-from backend.src.models.stock_trend_lstm.stock_trend_lstm_model import StockTrendLSTMModel
 from backend.src.utils.config import Config
 
 config = Config("C:/Users/mohae/Desktop/StockTrendPredictor/backend/config.yaml")
@@ -37,13 +36,8 @@ class StockTrendLSTMTestPipeline:
 
         self.labeled_testing_ts: pd.DataFrame | None = None
 
-        self.X_train = None
-        self.y_train = None
         self.X_test = None
         self.y_test = None
-
-        self.model_wrapper: StockTrendLSTMModel | None = None
-        self.history = None
 
         logger.info("StockTrendLSTMTestPipeline initialized")
 

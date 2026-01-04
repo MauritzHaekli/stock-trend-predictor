@@ -124,6 +124,7 @@ class StockTrendLSTMTrainPipeline:
             batch_size=self.batch_size,
         )
 
+        self.model_wrapper.model.summary()
         logger.info("Model built successfully")
 
     def train(self):
