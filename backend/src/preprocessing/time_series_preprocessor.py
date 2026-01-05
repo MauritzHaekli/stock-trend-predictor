@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import logging
-from backend.src.schema.raw_ohlcv import RawOHLCVColumns as rawOHLCV
+from backend.src.schema.ohlcv import OHLCVColumns as rawOHLCV
 
 logger = logging.getLogger(__name__)
 

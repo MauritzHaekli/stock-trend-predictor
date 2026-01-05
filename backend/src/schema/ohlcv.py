@@ -1,4 +1,4 @@
-class RawOHLCVColumns:
+class OHLCVColumns:
     DATETIME = "datetime"
     OPEN = "open"
     HIGH = "high"

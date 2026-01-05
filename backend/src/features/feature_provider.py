@@ -5,7 +5,7 @@ from backend.src.features.core_dynamics_provider import CoreDynamicsProvider
 from backend.src.features.returns_provider import ReturnsProvider
 from backend.src.features.binary_indicator_provider import BinaryIndicatorProvider
 from backend.src.features.datetime_provider import DatetimeProvider
-from backend.src.schema.raw_ohlcv import RawOHLCVColumns
+from backend.src.schema.ohlcv import OHLCVColumns
 
 
 class FeatureProvider:
@@ -21,12 +21,12 @@ class FeatureProvider:
 
         self.ohlcv_provider = OHLCVProvider(self.time_series)
         self.technical_indicator_provider = TechnicalIndicatorProvider(time_series=time_series,params=params)
-        self.core_dynamics_provider = CoreDynamicsProvider(close_price=time_series[RawOHLCVColumns.CLOSE],
+        self.core_dynamics_provider = CoreDynamicsProvider(close_price=time_series[OHLCVColumns.CLOSE],
                                                            ema_series=self.technical_indicator_provider.ema,
                                                            atr_series=self.technical_indicator_provider.atr,
                                                            rounding_factor=4)
-        self.returns_provider = ReturnsProvider(open_price=time_series[RawOHLCVColumns.OPEN], close_price=time_series[RawOHLCVColumns.CLOSE])
-        self.binary_indicator_provider = BinaryIndicatorProvider(close_price=time_series[RawOHLCVColumns.CLOSE],
+        self.returns_provider = ReturnsProvider(open_price=time_series[OHLCVColumns.OPEN], close_price=time_series[OHLCVColumns.CLOSE])
+        self.binary_indicator_provider = BinaryIndicatorProvider(close_price=time_series[OHLCVColumns.CLOSE],
                                                                  ema_series=self.technical_indicator_provider.ema,
                                                                  ema_slope=self.core_dynamics_provider.get_ema_relative_slope(),
                                                                  log_return=self.returns_provider.log_return_n(n=1),

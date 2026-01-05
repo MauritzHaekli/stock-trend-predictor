@@ -2,7 +2,7 @@ import pandas as pd
 from ta.momentum import RSIIndicator
 from ta.volatility import BollingerBands, AverageTrueRange
 from ta.trend import ADXIndicator, EMAIndicator, MACD, SMAIndicator
-from backend.src.schema.raw_ohlcv import RawOHLCVColumns
+from backend.src.schema.ohlcv import OHLCVColumns
 from backend.src.schema.technical_indicators import TechnicalIndicatorColumns
 
 class TechnicalIndicatorProvider:
@@ -18,7 +18,7 @@ class TechnicalIndicatorProvider:
         self.technical_indicators_parameters = self.params.get("technical_indicator_parameters")
 
         self.rounding_factor: int = self.params.get("calculation_parameters").get('rounding_factor')
-        self.raw_ohlcv_columns: RawOHLCVColumns = RawOHLCVColumns()
+        self.raw_ohlcv_columns: OHLCVColumns = OHLCVColumns()
         self.technical_indicator_columns: TechnicalIndicatorColumns = TechnicalIndicatorColumns()
         self.time_series: pd.DataFrame = time_series
 

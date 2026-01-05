@@ -1,5 +1,5 @@
 import pandas as pd
-from backend.src.schema.raw_ohlcv import RawOHLCVColumns
+from backend.src.schema.ohlcv import OHLCVColumns
 
 class OHLCVProvider:
     """
@@ -8,7 +8,7 @@ class OHLCVProvider:
 
     def __init__(self, time_series: pd.DataFrame):
         self.time_series = time_series
-        self.ohlcv_columns = RawOHLCVColumns()
+        self.ohlcv_columns = OHLCVColumns()
 
         self._validate_time_series()
 
