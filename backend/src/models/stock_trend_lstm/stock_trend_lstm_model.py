@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 from keras.models import Sequential, Model
-from keras.layers import LSTM, Dense, Dropout
+from keras.layers import LSTM, Dense, Dropout, Conv1D
 from keras.metrics import BinaryAccuracy,Precision, Recall, AUC
 from keras.regularizers import l2
 from keras.optimizers import Adam
@@ -78,31 +78,36 @@ class StockTrendLSTMModel:
                 f"y={len(self.label_validation_data)}"
             )
 
-
     def build_model(self) -> None:
         """
-        Build the LSTM model with the inferred input shape.
+        Build a CNN → LSTM model with the inferred input shape.
         """
         self.model = Sequential()
-        self.model.add(LSTM(50, input_shape=self.input_shape, return_sequences=True))
+
+        self.model.add(Conv1D(filters=16, kernel_size=5, padding="same", activation="relu", input_shape=self.input_shape))
+        self.model.add(Conv1D(filters=16, kernel_size=3, padding="same", activation="relu"))
         self.model.add(Dropout(0.2))
+
+        self.model.add(LSTM(50, return_sequences=True))
+        self.model.add(Dropout(0.2))
+
         self.model.add(LSTM(50))
         self.model.add(Dropout(0.2))
+
         self.model.add(Dense(1, activation='sigmoid', kernel_regularizer=l2(0.001)))
 
-        learning_rate: float = 0.001
-        optimizer = Adam(learning_rate=learning_rate)
-        self.model.compile(
-            optimizer=optimizer,
-            loss='binary_crossentropy',
-            metrics=[
-                BinaryAccuracy(name='accuracy'),
-                Precision(name='precision'),
-                Recall(name='recall'),
-                AUC(name='auc', curve='ROC'),
-                AUC(name='pr_auc', curve='PR'),
-            ]
-        )
+        optimizer = Adam(learning_rate=0.001)
+
+        self.model.compile(optimizer=optimizer,
+                           loss='binary_crossentropy',
+                           metrics=[
+                               BinaryAccuracy(name='accuracy'),
+                               Precision(name='precision'),
+                               Recall(name='recall'),
+                               AUC(name='auc', curve='ROC'),
+                               AUC(name='pr_auc', curve='PR'),
+                           ]
+                           )
 
     def train_model(self) -> History:
         if self.model is None:

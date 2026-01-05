@@ -1,4 +1,5 @@
 import pandas as pd
+from backend.src.features.ohlcv_provider import OHLCVProvider
 from backend.src.features.technical_indicator_provider import TechnicalIndicatorProvider
 from backend.src.features.core_dynamics_provider import CoreDynamicsProvider
 from backend.src.features.returns_provider import ReturnsProvider
@@ -18,14 +19,13 @@ class FeatureProvider:
         self.params = params
         self.cutoff = cutoff
 
-        self.raw_ohlcv_columns = RawOHLCVColumns()
-
+        self.ohlcv_provider = OHLCVProvider(self.time_series)
         self.technical_indicator_provider = TechnicalIndicatorProvider(time_series=time_series,params=params)
         self.core_dynamics_provider = CoreDynamicsProvider(close_price=time_series[RawOHLCVColumns.CLOSE],
                                                            ema_series=self.technical_indicator_provider.ema,
                                                            atr_series=self.technical_indicator_provider.atr,
                                                            rounding_factor=4)
-        self.returns_provider = ReturnsProvider(close_price=time_series[RawOHLCVColumns.CLOSE])
+        self.returns_provider = ReturnsProvider(open_price=time_series[RawOHLCVColumns.OPEN], close_price=time_series[RawOHLCVColumns.CLOSE])
         self.binary_indicator_provider = BinaryIndicatorProvider(close_price=time_series[RawOHLCVColumns.CLOSE],
                                                                  ema_series=self.technical_indicator_provider.ema,
                                                                  ema_slope=self.core_dynamics_provider.get_ema_relative_slope(),
@@ -41,17 +41,7 @@ class FeatureProvider:
         Combine all feature blocks into a single DataFrame.
         """
 
-        ohlcv_features = pd.DataFrame(
-            {
-                self.raw_ohlcv_columns.OPEN: self.time_series[self.raw_ohlcv_columns.OPEN],
-                self.raw_ohlcv_columns.HIGH: self.time_series[self.raw_ohlcv_columns.HIGH],
-                self.raw_ohlcv_columns.LOW: self.time_series[self.raw_ohlcv_columns.LOW],
-                self.raw_ohlcv_columns.CLOSE: self.time_series[self.raw_ohlcv_columns.CLOSE],
-                self.raw_ohlcv_columns.VOLUME: self.time_series[self.raw_ohlcv_columns.VOLUME],
-            },
-            index=self.time_series.index,
-        )
-
+        ohlcv_features: pd.DataFrame = self.ohlcv_provider.ohlcv_features
         technical_indicators: pd.DataFrame = self.technical_indicator_provider.technical_indicators
         core_dynamics: pd.DataFrame = self.core_dynamics_provider.core_dynamics
         returns: pd.DataFrame = self.returns_provider.returns

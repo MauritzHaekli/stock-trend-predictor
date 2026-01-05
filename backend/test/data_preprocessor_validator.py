@@ -36,7 +36,7 @@ class DataPreprocessorValidator(unittest.TestCase):
 
         result = data_preprocessor.get_labeled_feature_data(test_data)
         self.assertEqual(result.shape, expected_result.shape)
-        self.assertListEqual(result.columns.tolist(), expected_result.columns.tolist())
+        self.assertListEqual(result.ohlcv_columns.tolist(), expected_result.columns.tolist())
         pd.testing.assert_frame_equal(result, expected_result, check_dtype=False)
 
     def test_get_feature_data(self):

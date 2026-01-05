@@ -4,7 +4,7 @@ import pandas as pd
 from backend.src.preprocessing.time_series_preprocessor import TimeSeriesPreprocessor
 from backend.src.features.feature_provider import FeatureProvider
 from backend.src.labeling.label_generator import LabelGenerator
-from backend.src.features.feature_scaler import FeatureScaler
+from backend.src.scaling.feature_scaler import FeatureScaler
 from backend.src.windowing.windowed_dataset_builder import WindowedDatasetBuilder
 from backend.src.models.stock_trend_lstm.stock_trend_lstm_model import StockTrendLSTMModel
 from backend.src.utils.config import Config
