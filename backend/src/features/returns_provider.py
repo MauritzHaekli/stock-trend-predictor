@@ -30,7 +30,6 @@ class ReturnsProvider:
             self.returns_columns.LOG_RETURN_TWO: self.log_return_n(n=2),
             self.returns_columns.LOG_RETURN_THREE: self.log_return_n(n=3),
             self.returns_columns.LOG_RETURN_NINE: self.log_return_n(n=9)
-
         }
 
         return pd.DataFrame(returns, index=self.close.index)

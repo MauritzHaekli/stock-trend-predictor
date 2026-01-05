@@ -28,7 +28,7 @@ class FeatureProvider:
         self.returns_provider = ReturnsProvider(close_price=time_series[RawOHLCVColumns.CLOSE])
         self.binary_indicator_provider = BinaryIndicatorProvider(close_price=time_series[RawOHLCVColumns.CLOSE],
                                                                  ema_series=self.technical_indicator_provider.ema,
-                                                                 ema_slope=self.core_dynamics_provider.ema_relative_slope,
+                                                                 ema_slope=self.core_dynamics_provider.get_ema_relative_slope(),
                                                                  log_return=self.returns_provider.log_return_n(n=1),
                                                                  atr_series=self.technical_indicator_provider.atr,
                                                                  bollinger_series=self.technical_indicator_provider.bollinger_percent)
