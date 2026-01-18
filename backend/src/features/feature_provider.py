@@ -1,10 +1,13 @@
 import pandas as pd
 from backend.src.features.ohlcv_provider import OHLCVProvider
+from backend.src.features.price_feature_provider import PriceFeatureProvider
+from backend.src.features.price_transformation_provider import PriceTransformationProvider
 from backend.src.features.technical_indicator_provider import TechnicalIndicatorProvider
 from backend.src.features.core_dynamics_provider import CoreDynamicsProvider
 from backend.src.features.returns_provider import ReturnsProvider
 from backend.src.features.binary_indicator_provider import BinaryIndicatorProvider
 from backend.src.features.datetime_provider import DatetimeProvider
+from backend.src.features.volume_feature_provider import VolumeFeatureProvider
 from backend.src.schema.ohlcv import OHLCVColumns
 
 
@@ -16,17 +19,30 @@ class FeatureProvider:
 
     def __init__(self, time_series: pd.DataFrame, params: dict, cutoff: int = 40):
         self.time_series = time_series
+        self.open = time_series[OHLCVColumns.OPEN]
+        self.high = time_series[OHLCVColumns.HIGH]
+        self.low = time_series[OHLCVColumns.LOW]
+        self.close = time_series[OHLCVColumns.CLOSE]
+        self.volume = time_series[OHLCVColumns.VOLUME]
         self.params = params
         self.cutoff = cutoff
 
         self.ohlcv_provider = OHLCVProvider(self.time_series)
+        self.price_transformation_provider = PriceTransformationProvider(self.time_series)
         self.technical_indicator_provider = TechnicalIndicatorProvider(time_series=time_series,params=params)
-        self.core_dynamics_provider = CoreDynamicsProvider(close_price=time_series[OHLCVColumns.CLOSE],
+        self.volume_feature_provider = VolumeFeatureProvider(close_price=self.close, volume=self.volume, atr=self.technical_indicator_provider.atr)
+
+        self.core_dynamics_provider = CoreDynamicsProvider(close_price=self.close,
                                                            ema_series=self.technical_indicator_provider.ema,
                                                            atr_series=self.technical_indicator_provider.atr,
                                                            rounding_factor=4)
-        self.returns_provider = ReturnsProvider(open_price=time_series[OHLCVColumns.OPEN], close_price=time_series[OHLCVColumns.CLOSE])
-        self.binary_indicator_provider = BinaryIndicatorProvider(close_price=time_series[OHLCVColumns.CLOSE],
+        self.price_feature_provider = PriceFeatureProvider(open_price=self.open,
+                                                           high_price=self.high,
+                                                           low_price=self.low,
+                                                           close_price=self.close,
+                                                           atr=self.technical_indicator_provider.atr)
+        self.returns_provider = ReturnsProvider(open_price=self.open, close_price=self.close)
+        self.binary_indicator_provider = BinaryIndicatorProvider(close_price=self.close,
                                                                  ema_series=self.technical_indicator_provider.ema,
                                                                  ema_slope=self.core_dynamics_provider.get_ema_relative_slope(),
                                                                  log_return=self.returns_provider.log_return_n(n=1),
@@ -42,8 +58,11 @@ class FeatureProvider:
         """
 
         ohlcv_features: pd.DataFrame = self.ohlcv_provider.ohlcv_features
+        price_transformations: pd.DataFrame = self.price_transformation_provider.price_transformations
         technical_indicators: pd.DataFrame = self.technical_indicator_provider.technical_indicators
+        volume_features: pd.DataFrame = self.volume_feature_provider.volume_features
         core_dynamics: pd.DataFrame = self.core_dynamics_provider.core_dynamics
+        price_features: pd.DataFrame = self.price_feature_provider.price_features
         returns: pd.DataFrame = self.returns_provider.returns
         binary_indicators: pd.DataFrame = self.binary_indicator_provider.binary_indicators
 
@@ -54,8 +73,11 @@ class FeatureProvider:
         feature_data = pd.concat(
             [
                 ohlcv_features,
+                price_transformations,
                 technical_indicators,
+                # volume_features,
                 core_dynamics,
+                price_features,
                 returns,
                 binary_indicators,
                 datetime_features

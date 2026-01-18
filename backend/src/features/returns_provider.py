@@ -5,8 +5,7 @@ from backend.src.schema.returns import ReturnsColumns
 
 class ReturnsProvider:
     """
-    Computes geometric and dynamic relationships between price and core indicators
-    (e.g. EMA distance, slope, acceleration).
+    Computes returns of different windows as well as oc return and gap return.
     """
 
     def __init__(

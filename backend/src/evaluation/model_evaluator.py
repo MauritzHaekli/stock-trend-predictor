@@ -158,25 +158,14 @@ class ModelEvaluator:
         plt.grid(True)
         plt.show()
 
-    def plot_probability_distribution(
-            self,
-            bins: int = 50,
-            log_y: bool = False,
-            show_thresholds: list[float] | None = None,
-    ) -> None:
+    def plot_probability_distribution(self, bins: int = 50, log_y: bool = False, show_thresholds: list[float] | None = None) -> None:
         """
         Plot side-by-side distributions of predicted probabilities
         for y_true = 0 and y_true = 1.
 
-        Parameters
-        ----------
-        bins : int
-            Number of histogram bins.
-        log_y : bool
-            If True, uses log scale on y-axis (useful for imbalance).
-        show_thresholds : list[float] | None
-            Optional list of thresholds to draw as vertical lines
-            (e.g. [0.5, 0.48]).
+        bins : int Number of histogram bins.
+        log_y : bool If True, uses log scale on y-axis (useful for imbalance).
+        show_thresholds : list[float] | None Optional list of thresholds to draw as vertical lines
         """
 
         proba_neg = self.y_proba[self.y_true == 0]
@@ -184,7 +173,6 @@ class ModelEvaluator:
 
         fig, axes = plt.subplots(1, 2, figsize=(12, 4), sharex=True)
 
-        # --- y = 0 ---
         axes[0].hist(
             proba_neg,
             bins=bins,
@@ -197,7 +185,6 @@ class ModelEvaluator:
         axes[0].set_ylabel("Density")
         axes[0].grid(True)
 
-        # --- y = 1 ---
         axes[1].hist(
             proba_pos,
             bins=bins,
@@ -269,9 +256,27 @@ class ModelEvaluator:
         axes[1].set_xlabel("Predicted probability")
 
         if show_quantiles:
-            for q in quantiles:
-                axes[0].axvline(np.quantile(proba_neg, q), linestyle="--", color="black", alpha=0.6)
-                axes[1].axvline(np.quantile(proba_pos, q), linestyle="--", color="black", alpha=0.6)
+            cmap = plt.get_cmap("inferno")
+            colors = cmap(np.linspace(0, 1, len(quantiles)))
+
+            for quantile, color in zip(quantiles, colors):
+                axes[0].axvline(
+                    np.quantile(proba_neg, quantile),
+                    linestyle="--",
+                    color=color,
+                    alpha=0.8,
+                    label=f"q={quantile:.2f}"
+                )
+                axes[1].axvline(
+                    np.quantile(proba_pos, quantile),
+                    linestyle="--",
+                    color=color,
+                    alpha=0.8,
+                    label=f"q={quantile:.2f}"
+                )
+
+        axes[0].legend()
+        axes[1].legend()
 
         for ax in axes:
             ax.set_xlim(0, 1)
